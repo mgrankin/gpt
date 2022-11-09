@@ -1,0 +1,56 @@
+name: rugpt
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+variables:
+  DS_BUILD_SPARSE_ATTN: 1
+  DS_BUILD_CPU_ADAM: 1
+dependencies:
+  - ipykernel
+  - ipywidgets
+  - jupyterlab_widgets
+  - python<3.10 # python 3.9 for triton
+  - pip
+  - nbdev
+# https://anaconda.org/pytorch/pytorch/files
+  - pytorch=*=*cuda11.7* 
+  - tqdm
+  - psycopg2
+  - SQLAlchemy
+  - pandas
+  - Pillow
+  - voila
+  - fastapi==0.63.0
+  - uvicorn
+  - transformers==4.12.5
+  - tokenizers
+  - diffusers
+  - datasets
+  - scipy
+  - dateparser
+  - matplotlib
+  - plotly
+  - ftfy
+  - schedule
+  - psutil
+  - pymilvus
+  - wrapt
+#
+  - tensorboard
+  - nltk
+  - sentencepiece
+  - boto3
+  - regex
+  - uvicorn[standard]
+  - ninja
+  - pip:
+    - triton 
+    - deepspeed
+    - mpi4py
+    - cpufeature
+    - open_clip_torch
+    - pytelegrambotapi
+    - tendo
+    - docker
+    - fastai
