@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from os import environ
-from rest.core import log
+from rest.core import log, get_ban
 
 if environ.get('XL', 0):
     from rest.restxl import seq_length, get_sample
@@ -33,7 +33,10 @@ def gen_sample(prompt: Prompt, request: Request):
     log(request, 0, hash, prompt)
     with lock:
         result = {"replies": get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak)}
-    log(request, 1, hash, result)
+    ban = get_ban(request)
+    log(request, 1+ban, hash, result)
+    if ban:
+        result["replies"][0] = 'техт сгенерирован с помощью нейросети Порфьрьевич porfirevich.ru'
     return result
  
 @app.get("/health")
