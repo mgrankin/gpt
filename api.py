@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from os import environ
 from rest.core import log, get_ban
+import random
 
 if environ.get('XL', 0):
     from rest.restxl import seq_length, get_sample
