@@ -4,7 +4,7 @@
 __all__ = ['singleton', 'model_path', 'seq_length', 'model', 'tokenizer', 'ds_engine', 'get_sample']
 
 # %% ../04_restXL.ipynb 4
-from .core import init_instance, process_seq
+from .core import init_instance, generate
 singleton, model_path = init_instance()
 
 # %% ../04_restXL.ipynb 5
@@ -37,7 +37,7 @@ ds_engine = deepspeed.init_inference(model,
                                  replace_with_kernel_inject=True)
 model = ds_engine.module
 
-# %% ../04_restXL.ipynb 10
+# %% ../04_restXL.ipynb 11
 def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
     encoded_prompt = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").cuda()
     encoded_prompt = encoded_prompt[:,length-(seq_length-1):]
@@ -65,3 +65,7 @@ def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
         generated_sequences.append(total_sequence)
 
     return process_seq(generated_sequences)
+
+# %% ../04_restXL.ipynb 12
+def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
+    return generate(model, tokenizer, seq_length, prompt, length, num_samples, allow_linebreak)
