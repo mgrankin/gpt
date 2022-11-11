@@ -56,4 +56,6 @@ def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
             bad_words_ids = bad_words_ids
         )
     generated_sequences = output_sequences
-    return process_seq(generated_sequences)
+    generated_sequences = process_seq(generated_sequences)
+    generated_sequences = [v.removeprefix(prompt) for v in generated_sequences]
+    return generated_sequences
