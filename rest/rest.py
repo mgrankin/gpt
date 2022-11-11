@@ -3,21 +3,22 @@
 # %% auto 0
 __all__ = ['singleton', 'model_path', 'seq_length', 'tokenizer', 'model', 'get_sample']
 
-# %% ../03_rest.ipynb 2
+# %% ../03_rest.ipynb 3
 from .core import init_instance, process_seq
 singleton, model_path = init_instance()
 
-# %% ../03_rest.ipynb 4
+# %% ../03_rest.ipynb 5
 seq_length = 1024
 
 model_path = f'./models/large/{model_path}'
 from transformers import GPT2LMHeadModel,GPT2Tokenizer
-tokenizer = GPT2Tokenizer.from_pretrained(model_path)
+tokenizer = GPT2Tokenizer.from_pretrained(model_path, pad_token_id = 50256)
 model = GPT2LMHeadModel.from_pretrained(model_path).half()
+model.config.pad_token_id = model.config.eos_token_id
 model.cuda()
 model.eval();
 
-# %% ../03_rest.ipynb 6
+# %% ../03_rest.ipynb 7
 def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
     encoded_prompt = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").cuda()
     encoded_prompt = encoded_prompt[:,length-(seq_length-1):]
