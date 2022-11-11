@@ -55,7 +55,13 @@ def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
             do_sample=True,num_return_sequences=num_samples,
             bad_words_ids = bad_words_ids
         )
-    generated_sequences = output_sequences
-    generated_sequences = process_seq(generated_sequences)
-    generated_sequences = [v.removeprefix(prompt) for v in generated_sequences]
-    return generated_sequences
+    if len(output_sequences.shape) > 2:
+            output_sequences.squeeze_()
+    generated_sequences = []
+    for generated_sequence_idx, generated_sequence in enumerate(output_sequences):
+        generated_sequence = generated_sequence.tolist()
+        text = tokenizer.decode(generated_sequence, clean_up_tokenization_spaces=True)
+        total_sequence = text[len(tokenizer.decode(encoded_prompt[0], clean_up_tokenization_spaces=True)) :]
+        generated_sequences.append(total_sequence)
+
+    return process_seq(generated_sequences)

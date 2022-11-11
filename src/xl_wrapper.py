@@ -240,7 +240,7 @@ class RuGPT3XL(PreTrainedModel):
             use_cache=use_cache,
             **model_kwargs
         )
-        return list(map(self.tokenizer.decode, res.tolist()))
+        return res # list(map(self.tokenizer.decode, res.tolist()))
 
     def __call__(self, text=None, input_ids=None, labels=None, **kwargs):
         if input_ids is None:
