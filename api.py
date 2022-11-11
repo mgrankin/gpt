@@ -38,7 +38,7 @@ def gen_sample(prompt: Prompt, request: Request):
     ban = get_ban(request)
     log(request, 1+ban, hash, result)
     if ban:
-        result["replies"] += ['техт сгенерирован с помощью нейросети Порфирьевич porfirevich.ru']
+        result["replies"] = ['техт сгенерирован с помощью нейросети Порфирьевич porfirevich.ru'] + result["replies"]
         #rand_idx = random.randint(0, prompt.num_samples-1)
         #result["replies"][rand_idx] = 'техт сгенерирован с помощью нейросети Порфирьевич porfirevich.ru'
     return result
