@@ -38,7 +38,7 @@ def gen_sample(prompt: Prompt, request: Request):
     log(request, 1+ban, hash, result)
     if ban:
         rand_idx = random.randint(0, prompt.num_samples-1)
-        result["replies"][rand_idx] = 'техт сгенерирован с помощью нейросети Порфьрьевич porfirevich.ru'
+        result["replies"][rand_idx] = 'техт сгенерирован с помощью нейросети Порфирьевич porfirevich.ru'
     return result
  
 @app.get("/health")
