@@ -94,12 +94,7 @@ def bad_words(tokenizer):
 def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, allow_linebreak:bool):
     encoded_prompt = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").cuda()
     encoded_prompt = encoded_prompt[:,length-(seq_length-1):]
-    bad_words_ids = [tokenizer.encode('[')[0], tokenizer.encode('(')[0], tokenizer.encode('1\xa01')[1]]
-    bad_words_ids += bad_points(tokenizer)
-    linebreak = tokenizer.encode("1\n1")[1]
-    lb2 = tokenizer.encode("1 \n")[1]
-    bad_words_ids += [] if allow_linebreak else [linebreak, lb2]
-    bad_words_ids = [[b] for b in bad_words_ids] + [[linebreak,linebreak]]
+    bad_words_ids = bad_words()
     output_sequences = model.generate(
             input_ids=encoded_prompt,
             max_length=length + len(encoded_prompt[0]),
