@@ -47,7 +47,7 @@ def bad_points(tokenizer, point):
 def bad_words(tokenizer, allow_linebreak):
     bad_symbols = ['[','(','\xa0','<|endoftext|>','*','­', '~', '_', '\\', '\n\n', '\uf04a']
     bad_words_ids = [tokenizer.encode(s) for s in bad_symbols]
-    for point in ['.','*','_','-']:
+    for point in ['.','*','_','-','\xa0']:
         bad_words_ids += bad_points(tokenizer, point)
     linebreaks = [tokenizer.encode(s) for s in ['\n', ' \n']]
     bad_words_ids += [] if allow_linebreak else linebreaks

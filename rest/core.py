@@ -85,7 +85,7 @@ def bad_points(tokenizer, point):
 def bad_words(tokenizer, allow_linebreak):
     bad_symbols = ['[','(','\xa0','<|endoftext|>','*','­', '~', '_', '\\', '\n\n', '\uf04a']
     bad_words_ids = [tokenizer.encode(s) for s in bad_symbols]
-    for point in ['.','*','_','-']:
+    for point in ['.','*','_','-','\xa0']:
         bad_words_ids += bad_points(tokenizer, point)
     linebreaks = [tokenizer.encode(s) for s in ['\n', ' \n']]
     bad_words_ids += [] if allow_linebreak else linebreaks
@@ -95,15 +95,14 @@ def bad_words(tokenizer, allow_linebreak):
 def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, allow_linebreak:bool):
     encoded_prompt = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").cuda()
     encoded_prompt = encoded_prompt[:,length-(seq_length-1):]
-    bad_words_ids = bad_words(tokenizer, allow_linebreak)
     output_sequences = model.generate(
             input_ids=encoded_prompt,
-            max_length=length + len(encoded_prompt[0]),
+            max_length= length + len(encoded_prompt[0]),
             temperature=1,
             top_k=0,
             top_p=0.9,
             do_sample=True,num_return_sequences=num_samples,
-            bad_words_ids = bad_words_ids
+            bad_words_ids = bad_words(tokenizer, allow_linebreak)
         )
     if len(output_sequences.shape) > 2:
             output_sequences.squeeze_()
