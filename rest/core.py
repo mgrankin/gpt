@@ -76,22 +76,22 @@ def process_seq(generated_sequences):
 # %% ../02_core.ipynb 8
 def bad_points(tokenizer, point):
     result = []
-    for i in range(2, 30):
+    for i in range(2, 50):
         code = tokenizer.encode(point*i)
         if len(code) == 1:
             result += [code]
     return result
 
 def bad_words(tokenizer, allow_linebreak):
-    bad_symbols = ['[','(','\xa0','<|endoftext|>','*','­', '~', '_', '\\', '\n\n', '\uf04a', '\ufeff']
+    bad_symbols = ['[','(','\xa0','<|endoftext|>','*','­', '~', '_', '\\', '\n\n', '\uf04a', '\ufeff', '\u2028']
     bad_words_ids = [tokenizer.encode(s) for s in bad_symbols]
-    for point in ['.','*','_','-','\xa0']:
+    for point in ['.','*','_','-','\xa0','!']:
         bad_words_ids += bad_points(tokenizer, point)
     linebreaks = [tokenizer.encode(s) for s in ['\n', ' \n']]
     bad_words_ids += [] if allow_linebreak else linebreaks
     return bad_words_ids
 
-# %% ../02_core.ipynb 9
+# %% ../02_core.ipynb 10
 def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, allow_linebreak:bool):
     encoded_prompt = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").cuda()
     encoded_prompt = encoded_prompt[:,length-(seq_length-1):]
@@ -102,6 +102,7 @@ def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, 
             top_k=0,
             top_p=0.9,
             do_sample=True,num_return_sequences=num_samples,
+            no_repeat_ngram_size=2,
             bad_words_ids = bad_words(tokenizer, allow_linebreak)
         )
     if len(output_sequences.shape) > 2:
