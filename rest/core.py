@@ -76,14 +76,14 @@ def process_seq(generated_sequences):
 # %% ../02_core.ipynb 8
 def bad_points(tokenizer, point):
     result = []
-    for i in range(3, 30):
+    for i in range(2, 30):
         code = tokenizer.encode(point*i)
         if len(code) == 1:
             result += [code]
     return result
 
 def bad_words(tokenizer, allow_linebreak):
-    bad_symbols = ['[','(','\xa0','<|endoftext|>','*','­', '~', '_', '\\', '\n\n', '\uf04a']
+    bad_symbols = ['[','(','\xa0','<|endoftext|>','*','­', '~', '_', '\\', '\n\n', '\uf04a', '\ufeff']
     bad_words_ids = [tokenizer.encode(s) for s in bad_symbols]
     for point in ['.','*','_','-','\xa0']:
         bad_words_ids += bad_points(tokenizer, point)
