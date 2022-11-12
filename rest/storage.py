@@ -41,6 +41,6 @@ ban = Table('ban', metadata,
 #ban.drop(engine)
 #connection.execute(delete(ban))
 
-# %% ../01_storage.ipynb 5
+# %% ../01_storage.ipynb 6
 metadata.create_all(engine)
 Index("log_created_ix", logs.c.created).create(connection, checkfirst=True)
