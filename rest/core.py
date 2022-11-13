@@ -28,11 +28,13 @@ from .storage import logs, connection
 from sqlalchemy.dialects.postgresql import insert
 
 def log(request, type, hash, log):
+    model = environ.get('MODEL', 'poetry')
     sessionid = request.cookies.get('sessionid')
     insert_stmt = insert(logs).values(ip=request.headers.get('X-Real-IP'), origin=request.headers.get('Origin'),
                                       agent=request.headers.get('User-Agent'), fs=request.headers.get('X-Forwarded-Server'),
                                       ff=request.headers.get('X-Forwarded-For'),
-                                      session=f'{sessionid}', type=type, hash=hash, log=str(log))
+                                      session=f'{sessionid}', type=type, hash=hash, 
+                                      log=str(log), model=model)
     connection.execute(insert_stmt)
 
 # %% ../02_core.ipynb 5
@@ -83,8 +85,12 @@ def bad_points(tokenizer, point):
     return result
 
 def bad_words(tokenizer, allow_linebreak):
-    bad_symbols = ['[','(','\xa0','<|endoftext|>','*','­', '~', '_', '\\', '\n\n', '\uf04a', '\ufeff', '\u2028']
+    bad_symbols = ['[','(','\xa0','*','­', '~', '_', '\\', '\n\n', '\uf04a', '\ufeff', '\u2028']
     bad_words_ids = [tokenizer.encode(s) for s in bad_symbols]
+    
+    eot = tokenizer.encode('a<|endoftext|>')[1]
+    if eot: bad_words_ids += [[eot]]
+    
     for point in ['.','*','_','-','\xa0','!']:
         bad_words_ids += bad_points(tokenizer, point)
     linebreaks = [tokenizer.encode(s) for s in ['\n', ' \n']]

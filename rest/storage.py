@@ -29,6 +29,7 @@ logs = Table('logs', metadata,
      Column('type', Integer, ),
      Column('hash', String, ),
      Column('log', String, ),
+     Column('model', String, ),
 )
 
 # %% ../01_storage.ipynb 4
