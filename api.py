@@ -34,7 +34,7 @@ def gen_sample(prompt: Prompt, request: Request):
     log(request, 0, hash, prompt)
     prompt.num_samples = 1 
     ban = get_ban(request)
-    if !ban:
+    if not ban:
         with lock:
             result = {"replies": get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak)}
         log(request, 1+ban, hash, result)
