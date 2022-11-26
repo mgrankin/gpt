@@ -33,12 +33,14 @@ def gen_sample(prompt: Prompt, request: Request):
     hash = hashlib.sha1(str(prompt).encode()).hexdigest()
     log(request, 0, hash, prompt)
     prompt.num_samples = 1 
-    with lock:
-        result = {"replies": get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak)}
     ban = get_ban(request)
-    log(request, 1+ban, hash, result)
-    if ban:
-        result["replies"] = ['техт сгенерирован с помощью нейросети Порфирьевич porfirevich.ru'] + result["replies"]
+    if !ban:
+        with lock:
+            result = {"replies": get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak)}
+        log(request, 1+ban, hash, result)
+    else:
+        result["replies"] = [''.join(random.choice('ты пидор') for i in range(random.randint(10,30))) ]
+        #result["replies"] = ['техт сгенерирован с помощью нейросети Порфирьевич porfirevich.ru'] + result["replies"]
         #rand_idx = random.randint(0, prompt.num_samples-1)
         #result["replies"][rand_idx] = 'техт сгенерирован с помощью нейросети Порфирьевич porfirevich.ru'
     return result
