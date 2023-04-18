@@ -1,4 +1,4 @@
-name: rugpt
+name: rugptdev
 channels:
   - pytorch
   - nvidia
@@ -54,3 +54,8 @@ dependencies:
     - tendo
     - docker
     - fastai
+    # manually
+    # ds_report
+    # pip uninstall -y deepspeed
+    # DS_BUILD_CPU_ADAM=1 DS_BUILD_SPARSE_ATTN=1 pip install git+https://github.com/mgrankin/DeepSpeed.git
+    # ds_report

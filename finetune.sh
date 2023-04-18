@@ -7,6 +7,12 @@ cd ru-gpts
 mamba env create 
 conda activate rugpt
 ########################################################################################
+cd ~/dev/gpt
+conda activate base
+conda env remove -n rugptdev
+mamba env create
+conda activate rugptdev
+########################################################################################
 cd
 mkdir .install
 cd .install

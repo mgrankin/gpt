@@ -15,7 +15,8 @@ model = RuGPT3XL.from_pretrained(
     "sberbank-ai/rugpt3xl",
     weights_path=f"./models/xl/{model_path}.model",
     deepspeed_config_path="src/deepspeed_config/gpt3_xl_sparse_2048.json",
-    seq_len=seq_length
+    seq_len=seq_length,
+    local_files_only=True
 )
 tokenizer = model.tokenizer
 model.cuda()
