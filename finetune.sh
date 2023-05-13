@@ -7,6 +7,8 @@ cd ru-gpts
 mamba env create 
 conda activate rugpt
 ########################################################################################
+pip install -U --pre triton
+########################################################################################
 cd ~/dev/gpt
 conda activate base
 conda env remove -n rugptdev
@@ -16,9 +18,10 @@ conda activate rugptdev
 cd
 mkdir .install
 cd .install
+sudo rm -R apex
 git clone https://github.com/NVIDIA/apex
 cd apex
-pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+MAX_JOBS=32 pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 ########################################################################################
 ds_report
 pip uninstall -y deepspeed

@@ -1,4 +1,4 @@
-name: rugptdev
+name: rugpt
 channels:
   - pytorch
   - nvidia
@@ -15,7 +15,11 @@ dependencies:
   - nbdev
 # https://anaconda.org/pytorch/pytorch/files
 # https://anaconda.org/pytorch-nightly/pytorch/files
-  - pytorch=*=*cuda11.7* 
+  - pytorch=1.13.1=*cuda11.7* # <2.0 for deepspeed
+  - cuda-toolkit==11.7
+  - cudatoolkit-dev==11.7
+  - cuda-nvcc>=11.7,<11.8
+  - gxx<12
   - tqdm
   - psycopg2
   - SQLAlchemy
@@ -45,16 +49,15 @@ dependencies:
   - regex
   - uvicorn[standard]
   - ninja
+  - mpi4py
   - pip:
-    - triton 
-    - deepspeed
-    - mpi4py
+    #- triton 
+    #- deepspeed
     - cpufeature
-    - open_clip_torch
     - pytelegrambotapi
     - tendo
     - docker
-    - fastai
+    #- fastai
     # manually
     # ds_report
     # pip uninstall -y deepspeed
