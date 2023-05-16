@@ -1,4 +1,48 @@
-yes|sudo apt install libaio-dev llvm-10-dev autoconf  libnuma-dev 
+########################################################################################
+#
+cd 
+git clone https://github.com/mgrankin/gpt.git
+model=pelevin
+docker run --name GPT --gpus all -it --shm-size 1g -p 8201:8080 \
+        -v $HOME/gpt:/gpt -e model=$model \
+        --rm nvcr.io/nvidia/pytorch:23.01-py3 
+         
+# inside
+apt update
+yes|apt install libaio-dev autoconf  libnuma-dev libpq-dev
+pip install py-cpuinfo
+pip install triton==1.0.0
+DS_BUILD_CPU_ADAM=1 DS_BUILD_SPARSE_ATTN=1 pip install git+https://github.com/Microsoft/DeepSpeed.git
+ds_report
+cd /gpt
+pip install -r requirements.txt
+
+# outside 
+docker commit GPT gptimage
+
+#
+docker run  --rm --name GPT1 --network="host" --gpus all -it --shm-size 1g -p 8201:8080 \
+        -v $HOME/gpt:/gpt -e model=$model gptimage
+
+cd /gpt; 
+XL=1 CUDA_VISIBLE_DEVICES=0 INSTANCE="0"  MODEL="pelevin" uvicorn api:app --reload --host 0.0.0.0 --port 8080
+
+docker run --name GPT --gpus all -it --shm-size 1g -p 8201:8080 \
+        -v $volume:/gpt -e model=$model \
+        --rm nvcr.io/nvidia/pytorch:23.01-py3 
+
+docker commit --change 'ENTRYPOINT ["/bin/run.sh"]' 3d555451f07a mymatlab:r2020a
+
+
+docker run --name LAMA --gpus '"device=3"' --shm-size 1g -p 999:80  \
+   -v $volume:/gpt ghcr.io/huggingface/text-generation-inference:0.6   \
+    -e model=$model 
+
+docker update LAMA --restart unless-stopped 
+
+
+yes|sudo apt install libaio-dev autoconf  libnuma-dev 
+ llvm-10-dev
 yes|sudo apt uninstall llvm-9-dev
 ########################################################################################
 cd 

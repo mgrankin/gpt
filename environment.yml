@@ -15,11 +15,7 @@ dependencies:
   - nbdev
 # https://anaconda.org/pytorch/pytorch/files
 # https://anaconda.org/pytorch-nightly/pytorch/files
-  - pytorch=1.13.1=*cuda11.7* # <2.0 for deepspeed
-  - cuda-toolkit==11.7
-  - cudatoolkit-dev==11.7
-  - cuda-nvcc>=11.7,<11.8
-  - gxx<12
+  - pytorch=*=*cuda11.7* 
   - tqdm
   - psycopg2
   - SQLAlchemy
@@ -51,9 +47,11 @@ dependencies:
   - ninja
   - mpi4py
   - pip:
-    #- triton 
-    #- deepspeed
+    - triton 
+    - deepspeed
+    - mpi4py
     - cpufeature
+    - open_clip_torch
     - pytelegrambotapi
     - tendo
     - docker

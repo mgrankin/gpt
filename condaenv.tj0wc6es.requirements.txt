@@ -1,0 +1,9 @@
+triton
+deepspeed
+mpi4py
+cpufeature
+open_clip_torch
+pytelegrambotapi
+tendo
+docker
+fastai

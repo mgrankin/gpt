@@ -6,6 +6,8 @@ from os import environ
 from rest.core import log, get_ban
 import random
 
+if environ.get('LAMA', 0):
+    from rest.restlama import seq_length, get_sample
 if environ.get('XL', 0):
     from rest.restxl import seq_length, get_sample
 else:

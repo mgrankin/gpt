@@ -16,6 +16,7 @@ d = { 'settings': { 'branch': 'master',
                            'rest.core.process_seq': ('core.html#process_seq', 'rest/core.py')},
             'rest.rest': {'rest.rest.get_sample': ('rest.html#get_sample', 'rest/rest.py')},
             'rest.rest_contrastive': {'rest.rest_contrastive.get_sample': ('rest_contrastive.html#get_sample', 'rest/rest_contrastive.py')},
+            'rest.restlama': {},
             'rest.restxl': {'rest.restxl.get_sample': ('restxl.html#get_sample', 'rest/restxl.py')},
             'rest.storage': {},
             'rest.text': {}}}
