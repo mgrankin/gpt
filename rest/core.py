@@ -98,7 +98,7 @@ def bad_words(tokenizer, allow_linebreak):
     bad_words_ids += [] if allow_linebreak else linebreaks
     return bad_words_ids
 
-# %% ../02_core.ipynb 10
+# %% ../02_core.ipynb 9
 def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, allow_linebreak:bool):
     encoded_prompt = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").cuda()
     encoded_prompt = encoded_prompt[:,length-(seq_length-1):]
