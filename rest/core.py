@@ -26,6 +26,7 @@ def init_instance():
 # %% ../02_core.ipynb 4
 from .storage import logs, connection
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import text
 
 def log(request, type, hash, log):
     model = environ.get('MODEL', 'poetry')
@@ -39,7 +40,7 @@ def log(request, type, hash, log):
 
 # %% ../02_core.ipynb 5
 def get_ban_ip(ip):
-    ban_type = pd.read_sql_query("select ban_type from ban where ip = %(ip)s", connection, params={"ip":ip})
+    ban_type = pd.read_sql_query(text("select ban_type from ban where ip = :ip"), connection, params={"ip":ip})
     if ban_type.empty: return 0
     return int(ban_type.iloc[0]['ban_type'])
 

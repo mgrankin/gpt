@@ -1,38 +1,65 @@
+git clone https://github.com/mgrankin/DeepSpeed.git
+
+git remote add mic https://github.com/microsoft/DeepSpeed.git
+
+git fetch mic
+
+git merge mic/reyazda/triton-new-sparse
+
 ########################################################################################
 #
 cd 
 git clone https://github.com/mgrankin/gpt.git
 model=pelevin
-docker run --name GPT --gpus all -it --shm-size 1g -p 8201:8080 \
+docker run --name GPT --gpus all -it --network="host" --shm-size 1g  \
         -v $HOME/gpt:/gpt -e model=$model \
-        --rm nvcr.io/nvidia/pytorch:23.01-py3 
+        --rm  nvcr.io/nvidia/pytorch:22.12-py3
          
 # inside
 apt update
 yes|apt install libaio-dev autoconf  libnuma-dev libpq-dev
 pip install py-cpuinfo
-pip install triton==1.0.0
-DS_BUILD_CPU_ADAM=1 DS_BUILD_SPARSE_ATTN=1 pip install git+https://github.com/Microsoft/DeepSpeed.git
-ds_report
 cd /gpt
 pip install -r requirements.txt
+
+
+pip install triton==2.0.0.dev20221202
+DS_BUILD_CPU_ADAM=1 DS_BUILD_SPARSE_ATTN=1 pip install git+https://github.com/mgrankin/DeepSpeed.git
+
+
+pip install -U --pre triton
+
+
+
+pip uninstall DeepSpeed
+pip install git+https://github.com/openai/triton.git
+DS_BUILD_CPU_ADAM=1 DS_BUILD_SPARSE_ATTN=1 pip install git+https://github.com/mgrankin/DeepSpeed.git
+ds_report
+cd /gpt; 
+XL=1 CUDA_VISIBLE_DEVICES=0 INSTANCE="0"  MODEL="pelevin" uvicorn api:app --reload --host 0.0.0.0 --port 8202
+
+pip uninstall -y DeepSpeed 
+DS_BUILD_CPU_ADAM=1 DS_BUILD_SPARSE_ATTN=1 pip install git+https://github.com/mgrankin/DeepSpeed.git
+ds_report
+
 
 # outside 
 docker commit GPT gptimage
 
 #
-docker run  --rm --name GPT1 --network="host" --gpus all -it --shm-size 1g -p 8201:8080 \
+docker run  --rm --name GPT2 --network="host" --gpus all -it --shm-size 1g  \
         -v $HOME/gpt:/gpt -e model=$model gptimage
 
-cd /gpt; 
-XL=1 CUDA_VISIBLE_DEVICES=0 INSTANCE="0"  MODEL="pelevin" uvicorn api:app --reload --host 0.0.0.0 --port 8080
 
-docker run --name GPT --gpus all -it --shm-size 1g -p 8201:8080 \
-        -v $volume:/gpt -e model=$model \
+
+docker run --name GPT --gpus all -it --shm-size 1g  --network="host" \
+        -v $HOME/gpt:/gpt -e model=$model \
         --rm nvcr.io/nvidia/pytorch:23.01-py3 
+
 
 docker commit --change 'ENTRYPOINT ["/bin/run.sh"]' 3d555451f07a mymatlab:r2020a
 
+-p 8201:8080
 
 docker run --name LAMA --gpus '"device=3"' --shm-size 1g -p 999:80  \
    -v $volume:/gpt ghcr.io/huggingface/text-generation-inference:0.6   \

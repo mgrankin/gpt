@@ -7,12 +7,12 @@ __all__ = ['singleton', 'model_path', 'seq_length', 'model', 'tokenizer', 'ds_en
 from .core import init_instance, generate
 singleton, model_path = init_instance()
 
-# %% ../04_restXL.ipynb 6
+# %% ../04_restXL.ipynb 11
 seq_length = 512
 
 from src.xl_wrapper import RuGPT3XL
 model = RuGPT3XL.from_pretrained(
-    "ai-forever/rugpt3xl",
+    "sberbank-ai/rugpt3xl",
     weights_path=f"./models/xl/{model_path}.model",
     deepspeed_config_path="src/deepspeed_config/gpt3_xl_sparse_2048.json",
     seq_len=seq_length,
@@ -22,7 +22,7 @@ tokenizer = model.tokenizer
 model.cuda()
 model.eval();
 
-# %% ../04_restXL.ipynb 8
+# %% ../04_restXL.ipynb 13
 import deepspeed, torch
 ds_engine = deepspeed.init_inference(model,
                                  mp_size=1,
@@ -32,6 +32,6 @@ ds_engine = deepspeed.init_inference(model,
                                  replace_with_kernel_inject=True)
 model = ds_engine.module
 
-# %% ../04_restXL.ipynb 9
+# %% ../04_restXL.ipynb 14
 def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
     return generate(model, tokenizer, seq_length, prompt, length, num_samples, allow_linebreak)

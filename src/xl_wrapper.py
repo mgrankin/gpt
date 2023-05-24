@@ -177,7 +177,7 @@ class RuGPT3XL(PreTrainedModel):
         #np.random.seed(seed)
         #torch.manual_seed(seed)
         #mpu.model_parallel_cuda_manual_seed(seed)
-        tokenizer = GPT2Tokenizer.from_pretrained(model_name_or_path, local_files_only=True)
+        tokenizer = GPT2Tokenizer.from_pretrained('./tokenizer/rugpt3xl.tokenizer', local_files_only=True)
         logger.info("Check cached model files...")
         if weights_path is None:
             weights_path, deepspeed_config_path = download_model_files(model_name_or_path)

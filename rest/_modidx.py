@@ -17,6 +17,7 @@ d = { 'settings': { 'branch': 'master',
             'rest.rest': {'rest.rest.get_sample': ('rest.html#get_sample', 'rest/rest.py')},
             'rest.rest_contrastive': {'rest.rest_contrastive.get_sample': ('rest_contrastive.html#get_sample', 'rest/rest_contrastive.py')},
             'rest.restlama': {},
+            'rest.restproxy': {'rest.restproxy.get_sample': ('restproxy.html#get_sample', 'rest/restproxy.py')},
             'rest.restxl': {'rest.restxl.get_sample': ('restxl.html#get_sample', 'rest/restxl.py')},
             'rest.storage': {},
             'rest.text': {}}}
