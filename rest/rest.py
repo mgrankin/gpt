@@ -11,9 +11,10 @@ singleton, model_path = init_instance()
 seq_length = 1024
 
 model_path = f'./models/large/{model_path}'
+import torch
 from transformers import GPT2LMHeadModel,GPT2Tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained(model_path, pad_token_id = 50256)
-model = GPT2LMHeadModel.from_pretrained(model_path).half()
+model = GPT2LMHeadModel.from_pretrained(model_path,torch_dtype=torch.bfloat16) #.half()
 model.config.pad_token_id = model.config.eos_token_id
 model.cuda()
 model.eval();
