@@ -110,7 +110,9 @@ def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, 
             top_p=0.9,
             do_sample=True,num_return_sequences=num_samples,
             no_repeat_ngram_size=2,
-            bad_words_ids = bad_words(tokenizer, allow_linebreak)
+            bad_words_ids = bad_words(tokenizer, allow_linebreak),
+            early_stopping=True,
+            num_beams=1
         )
     if len(output_sequences.shape) > 2:
             output_sequences.squeeze_()

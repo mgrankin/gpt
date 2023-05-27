@@ -1,11 +1,11 @@
 nbdev
+tqdm
 psycopg2
 SQLAlchemy
 pandas
 Pillow
-voila
 fastapi==0.63.0
-transformers==4.12.5
+transformers
 tokenizers
 diffusers
 datasets
@@ -29,4 +29,4 @@ mpi4py
 pytelegrambotapi
 tendo
 docker
-
+deepspeed

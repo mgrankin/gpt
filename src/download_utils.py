@@ -1,10 +1,6 @@
 import os
 
-from transformers.file_utils import (
-    cached_path,
-    hf_bucket_url,
-    is_remote_url,
-)
+
 from transformers.utils import logging
 
 logger = logging.get_logger(__name__)
