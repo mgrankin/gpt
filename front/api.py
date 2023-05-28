@@ -29,7 +29,7 @@ async def gen_sample(prompt: Prompt, request: Request):
             port = ''
             if prompt.model == 'poetry': port = '7000'
             if prompt.model == 'gpt3': port = '7001'
-            if prompt.model == 'gpt3XL': port = '7002'
+            if prompt.model == 'xlarge': port = '7002'
 
             host_url = f'http://127.0.0.1:{port}/generate/'
             async with httpx.AsyncClient() as client:
@@ -46,7 +46,7 @@ async def gen_sample(prompt: Prompt, request: Request):
 
 @app.get("/models")
 def get_models():
-    return ['gpt3XL', 'gpt3', 'frida']
+    return ['xlarge', 'gpt3', 'frida']
 
 @app.get("/health")
 def healthcheck():
