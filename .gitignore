@@ -8,6 +8,7 @@ runs/
 logs/
 pelevin/
 poetry/
+models/
 __pycache__
 
 # C extensions

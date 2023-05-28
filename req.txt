@@ -1,10 +1,11 @@
 nbdev
 tqdm
+ipywidgets
 psycopg2
 SQLAlchemy
 pandas
 Pillow
-fastapi==0.63.0
+fastapi
 transformers
 tokenizers
 diffusers
@@ -30,3 +31,5 @@ pytelegrambotapi
 tendo
 docker
 deepspeed
+text-generation
+httpx

@@ -14,7 +14,8 @@
 		"--shm-size",
 		"1g",
 		"--gpus",
-		"all"
+		"all",
+		"--network=host"
 	],
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},

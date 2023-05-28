@@ -1,0 +1,11 @@
+tqdm
+psycopg2
+SQLAlchemy
+pandas
+Pillow
+fastapi==0.63.0
+regex
+uvicorn[standard]
+pytelegrambotapi
+httpx
+text_generation

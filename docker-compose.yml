@@ -1,0 +1,161 @@
+version: "3.3"
+
+networks:
+  traefik:
+
+# front
+services:
+  front:
+    image: front
+    container_name: front
+    network_mode: host
+
+# traefik 
+  traefik:
+    image: "traefik:v2.10"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=true"
+      - "--entrypoints.poetry.address=:7000"
+      - "--entrypoints.large.address=:7001"
+      - "--entrypoints.xl.address=:7002"
+      - "--entrypoints.frida.address=:7003"
+    ports:
+      - "7000-7100:7000-7100"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+# poetry model
+  model1:
+    image: "model"
+    shm_size: 1gb
+    environment:
+      - MODEL=large/poetry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.poetry.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.poetry.entrypoints=poetry"
+      - traefik.http.services.model1.loadbalancer.server.port=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['3']
+            capabilities: [gpu]
+
+# gpt3 large pelevin
+  model2:
+    image: "model"
+    shm_size: 1gb
+    environment:
+      - MODEL=large/pelevin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.large.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.large.entrypoints=large"
+      - traefik.http.services.large.loadbalancer.server.port=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['1']
+            capabilities: [gpu]
+
+  model3:
+    image: "model"
+    shm_size: 1gb
+    environment:
+      - MODEL=large/pelevin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.large.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.large.entrypoints=large"
+      - traefik.http.services.large.loadbalancer.server.port=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['2']
+            capabilities: [gpu]
+
+# gpt3 XL pelevin
+  model4:
+    image: "model"
+    shm_size: 1gb
+    environment:
+      - MODEL=xl/pelevin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.xl.entrypoints=xl"
+      - traefik.http.services.xl.loadbalancer.server.port=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['1']
+            capabilities: [gpu]
+
+  model5:
+    image: "model"
+    shm_size: 1gb
+    environment:
+      - MODEL=xl/pelevin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.xl.entrypoints=xl"
+      - traefik.http.services.xl.loadbalancer.server.port=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['2']
+            capabilities: [gpu]
+
+  model6:
+    image: "model"
+    shm_size: 1gb
+    environment:
+      - MODEL=xl/pelevin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.xl.entrypoints=xl"
+      - traefik.http.services.xl.loadbalancer.server.port=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['3']
+            capabilities: [gpu]
+
+# fred
+  text-generation-inference:
+    image: ghcr.io/huggingface/text-generation-inference:latest
+    shm_size: 1gb
+    command: --model-id /data --num-shard 1 --max-input-length 1000
+    volumes:
+      - ${HOME}/gpt/models/fred:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frida.rule=PathPrefix(`/`)
+      - traefik.http.routers.frida.entrypoints=frida
+      - traefik.http.services.text-generation-inference.loadbalancer.server.port=80
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['3']
+            capabilities: [gpu]
