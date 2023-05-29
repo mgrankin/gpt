@@ -1,8 +1,5 @@
 version: "3.3"
 
-networks:
-  traefik:
-
 # front
 services:
   front:
@@ -30,7 +27,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
 # poetry model
-  model1:
+  poetry:
     image: "model"
     shm_size: 1gb
     environment:
@@ -49,7 +46,7 @@ services:
             capabilities: [gpu]
 
 # gpt3 large pelevin
-  model2:
+  large2:
     image: "model"
     shm_size: 1gb
     environment:
@@ -67,7 +64,7 @@ services:
             device_ids: ['1']
             capabilities: [gpu]
 
-  model3:
+  large3:
     image: "model"
     shm_size: 1gb
     environment:
@@ -86,7 +83,7 @@ services:
             capabilities: [gpu]
 
 # gpt3 XL pelevin
-  model4:
+  xl4:
     image: "model"
     shm_size: 1gb
     environment:
@@ -104,7 +101,7 @@ services:
             device_ids: ['1']
             capabilities: [gpu]
 
-  model5:
+  xl5:
     image: "model"
     shm_size: 1gb
     environment:
@@ -122,7 +119,7 @@ services:
             device_ids: ['2']
             capabilities: [gpu]
 
-  model6:
+  xl6:
     image: "model"
     shm_size: 1gb
     environment:
@@ -141,7 +138,7 @@ services:
             capabilities: [gpu]
 
 # fred
-  text-generation-inference:
+  fred:
     image: ghcr.io/huggingface/text-generation-inference:latest
     shm_size: 1gb
     command: --model-id /data --num-shard 1 --max-input-length 1000
