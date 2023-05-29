@@ -2,7 +2,7 @@ import regex as re
 
 from pydantic import BaseModel, Field
 class Prompt(BaseModel):
-    prompt:str = Field(..., title='Model prompt')
+    prompt:str = Field('На словах ты Лев Толстой, а на деле', title='Model prompt')
     model:str = Field('gpt3', title='Model type')
     length:int = Field(15, ge=1, le=150, title='Number of tokens generated in each sample')
     num_samples:int = Field(3, ge=1, le=5, title='Number of samples generated')
