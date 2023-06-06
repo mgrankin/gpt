@@ -24,4 +24,4 @@ model.eval();
 
 # %% ../06_frida.ipynb 9
 def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
-    return generate(model, tokenizer, seq_length, prompt, length, num_samples, allow_linebreak)
+    return generate(model, tokenizer, seq_length, '<LM>' + prompt, length, num_samples, allow_linebreak)
