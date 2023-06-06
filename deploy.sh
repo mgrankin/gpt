@@ -5,6 +5,8 @@ docker build -t front .
 
 docker-compose up -d
 
+docker-compose up --remove-orphans
+docker image prune
 #docker-compose pull
 
 
