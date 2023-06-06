@@ -1,7 +1,9 @@
 from os import environ
 model_path = environ["MODEL"]
 
-if 'xl/' in model_path:
+if 'fred' in model_path:
+    from rest.frida import get_sample
+elif 'xl/' in model_path:
     from rest.xl import get_sample
 else:
     from rest.large import get_sample

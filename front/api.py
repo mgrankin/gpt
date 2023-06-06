@@ -23,14 +23,15 @@ async def gen_sample(prompt: Prompt, request: Request):
     log(prompt.model, request, 0, hash, prompt)
     ban = get_ban(request)
     if not ban:
-        if prompt.model == 'frida':
+        if prompt.model == 'frida не работает':
             result = {"replies": restproxy.get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak)}
         else:
             port = ''
             if prompt.model == 'poetry': port = '7000'
             if prompt.model == 'gpt3': port = '7001'
             if prompt.model == 'xlarge': port = '7002'
-
+            if prompt.model == 'frida': port = '7003'
+            
             host_url = f'http://127.0.0.1:{port}/generate/'
             async with httpx.AsyncClient() as client:
                 response = await client.post(host_url, json=prompt.dict())

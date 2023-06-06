@@ -42,7 +42,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['3']
+            device_ids: ['1']
             capabilities: [gpu]
 
 # gpt3 large pelevin
@@ -61,7 +61,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['1']
+            device_ids: ['2']
             capabilities: [gpu]
 
   large3:
@@ -79,7 +79,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['2']
+            device_ids: ['3']
             capabilities: [gpu]
 
 # gpt3 XL pelevin
@@ -138,17 +138,16 @@ services:
             capabilities: [gpu]
 
 # fred
-  fred1:
-    image: ghcr.io/huggingface/text-generation-inference:latest
+  frida1:
+    image: "model"
     shm_size: 1gb
-    command: --model-id /data --num-shard 1 --max-input-length 1000
-    volumes:
-      - ${HOME}/gpt/models/fred:/data
+    environment:
+      - MODEL=fred
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.frida.rule=PathPrefix(`/`)
-      - traefik.http.routers.frida.entrypoints=frida
-      - traefik.http.services.fred.loadbalancer.server.port=80
+      - "traefik.enable=true"
+      - "traefik.http.routers.frida.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frida.entrypoints=frida"
+      - traefik.http.services.frida.loadbalancer.server.port=8000
     deploy:
       resources:
         reservations:
@@ -157,17 +156,16 @@ services:
             device_ids: ['1']
             capabilities: [gpu]
 
-  fred2:
-    image: ghcr.io/huggingface/text-generation-inference:latest
+  frida2:
+    image: "model"
     shm_size: 1gb
-    command: --model-id /data --num-shard 1 --max-input-length 1000
-    volumes:
-      - ${HOME}/gpt/models/fred:/data
+    environment:
+      - MODEL=fred
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.frida.rule=PathPrefix(`/`)
-      - traefik.http.routers.frida.entrypoints=frida
-      - traefik.http.services.fred.loadbalancer.server.port=80
+      - "traefik.enable=true"
+      - "traefik.http.routers.frida.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frida.entrypoints=frida"
+      - traefik.http.services.frida.loadbalancer.server.port=8000
     deploy:
       resources:
         reservations:
@@ -176,17 +174,16 @@ services:
             device_ids: ['2']
             capabilities: [gpu]
 
-  fred3:
-    image: ghcr.io/huggingface/text-generation-inference:latest
+  frida3:
+    image: "model"
     shm_size: 1gb
-    command: --model-id /data --num-shard 1 --max-input-length 1000
-    volumes:
-      - ${HOME}/gpt/models/fred:/data
+    environment:
+      - MODEL=fred
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.frida.rule=PathPrefix(`/`)
-      - traefik.http.routers.frida.entrypoints=frida
-      - traefik.http.services.fred.loadbalancer.server.port=80
+      - "traefik.enable=true"
+      - "traefik.http.routers.frida.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frida.entrypoints=frida"
+      - traefik.http.services.frida.loadbalancer.server.port=8000
     deploy:
       resources:
         reservations:
@@ -194,3 +191,41 @@ services:
           - driver: nvidia
             device_ids: ['3']
             capabilities: [gpu]
+
+  # fred2:
+  #   image: ghcr.io/huggingface/text-generation-inference:latest
+  #   shm_size: 1gb
+  #   command: --model-id /data --num-shard 1 --max-input-length 1000
+  #   volumes:
+  #     - ${HOME}/gpt/models/fred:/data
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.frida.rule=PathPrefix(`/`)
+  #     - traefik.http.routers.frida.entrypoints=frida
+  #     - traefik.http.services.fred.loadbalancer.server.port=80
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #         - driver: nvidia
+  #           device_ids: ['2']
+  #           capabilities: [gpu]
+
+  # fred3:
+  #   image: ghcr.io/huggingface/text-generation-inference:latest
+  #   shm_size: 1gb
+  #   command: --model-id /data --num-shard 1 --max-input-length 1000
+  #   volumes:
+  #     - ${HOME}/gpt/models/fred:/data
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.frida.rule=PathPrefix(`/`)
+  #     - traefik.http.routers.frida.entrypoints=frida
+  #     - traefik.http.services.fred.loadbalancer.server.port=80
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #         - driver: nvidia
+  #           device_ids: ['3']
+  #           capabilities: [gpu]
