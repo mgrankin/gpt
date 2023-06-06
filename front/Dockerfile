@@ -10,4 +10,4 @@ WORKDIR /opt/app
 RUN pip install -r req.txt
 COPY . /opt/app
 
-CMD uvicorn api:app --host 0.0.0.0 --port 8281
+CMD uvicorn api:app --host 0.0.0.0 --port 8200
