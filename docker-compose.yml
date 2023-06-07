@@ -42,7 +42,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['1']
+            device_ids: ['3']
             capabilities: [gpu]
 
 # gpt3 large pelevin
@@ -83,23 +83,7 @@ services:
             capabilities: [gpu]
 
 # gpt3 XL pelevin
-  xl4:
-    image: "model"
-    shm_size: 1gb
-    environment:
-      - MODEL=xl/pelevin
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.xl.entrypoints=xl"
-      - traefik.http.services.xl.loadbalancer.server.port=8000
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['1']
-            capabilities: [gpu]
+
 
   xl5:
     image: "model"
@@ -154,42 +138,6 @@ services:
           devices:
           - driver: nvidia
             device_ids: ['1']
-            capabilities: [gpu]
-
-  frida2:
-    image: "model"
-    shm_size: 1gb
-    environment:
-      - MODEL=fred
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frida.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.frida.entrypoints=frida"
-      - traefik.http.services.frida.loadbalancer.server.port=8000
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['2']
-            capabilities: [gpu]
-
-  frida3:
-    image: "model"
-    shm_size: 1gb
-    environment:
-      - MODEL=fred
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frida.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.frida.entrypoints=frida"
-      - traefik.http.services.frida.loadbalancer.server.port=8000
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['3']
             capabilities: [gpu]
 
   # fred2:
