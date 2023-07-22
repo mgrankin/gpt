@@ -28,13 +28,13 @@ def bad_words(tokenizer, allow_linebreak):
 # %% ../02_gen.ipynb 3
 from front.common import process_seq
 
-def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, allow_linebreak:bool):
+def generate(model, tokenizer, seq_length, prompt, length:int, num_samples:int, allow_linebreak:bool, temperature:float):
     encoded_prompt = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt").cuda()
     encoded_prompt = encoded_prompt[:,length-(seq_length-1):]
     output_sequences = model.generate(
             input_ids=encoded_prompt,
             max_length= length + len(encoded_prompt[0]),
-            temperature=1,
+            temperature=temperature,
             top_k=0,
             top_p=0.9,
             do_sample=True,

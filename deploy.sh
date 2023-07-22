@@ -1,11 +1,11 @@
-docker build -t model .
-
 cd front
 docker build -t front .
+cd ..
 
-docker-compose up -d
+docker build -t model .
 
 docker-compose up --remove-orphans
+
 docker image prune
 #docker-compose pull
 

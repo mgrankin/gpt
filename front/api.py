@@ -24,7 +24,7 @@ async def gen_sample(prompt: Prompt, request: Request):
     ban = get_ban(request)
     if not ban:
         if prompt.model == 'frida не работает':
-            result = {"replies": restproxy.get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak)}
+            result = {"replies": restproxy.get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak, prompt.temperature)}
         else:
             port = ''
             if prompt.model == 'poetry': port = '7000'

@@ -22,5 +22,5 @@ model.cuda()
 model.eval();
 
 # %% ../03_large.ipynb 8
-def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
-    return generate(model, tokenizer, seq_length, prompt, length, num_samples, allow_linebreak)
+def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temperature:float=1.0):
+    return generate(model, tokenizer, seq_length, prompt, length, num_samples, allow_linebreak, temperature)

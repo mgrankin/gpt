@@ -25,10 +25,10 @@ model.eval();
 # %% ../06_frida.ipynb 8
 from front.common import process_seq
 
-def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool):
+def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temperature:float=0.5):
     lm_text = '<LM>' + prompt
     input_ids=torch.tensor([tokenizer.encode(lm_text)]).cuda()
-    output_ids = model.generate(input_ids, do_sample=True, temperature=.5, repetition_penalty=5.0, typical_p=0.9, top_k=10, top_p=0.95, #watermark=False,
+    output_ids = model.generate(input_ids, do_sample=True, temperature=temperature, repetition_penalty=5.0, typical_p=0.9, top_k=10, top_p=0.95, #watermark=False,
                         max_new_tokens=length, 
                         num_return_sequences=num_samples,)
 

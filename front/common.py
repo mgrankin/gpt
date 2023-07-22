@@ -7,6 +7,7 @@ class Prompt(BaseModel):
     length:int = Field(15, ge=1, le=150, title='Number of tokens generated in each sample')
     num_samples:int = Field(3, ge=1, le=5, title='Number of samples generated')
     allow_linebreak:bool = Field(False, title='Allow linebreak in a sample')
+    temperature:float = Field(1.0, ge=0.1, le=10.0, title='Temperature parameter for generation')
 
 def fix_string(string) -> str:
     in_word = string
