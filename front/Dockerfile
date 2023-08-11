@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-FROM nvcr.io/nvidia/pytorch:23.06-py3
-=======
 FROM nvcr.io/nvidia/pytorch:23.07-py3
->>>>>>> 6aaa562 (misc)
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
