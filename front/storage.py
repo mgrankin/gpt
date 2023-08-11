@@ -1,4 +1,4 @@
-dbhost = '192.168.187.12'
+dbhost = '192.168.1.4'
 THREADS_NUM = 10
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
