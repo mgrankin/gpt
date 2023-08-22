@@ -4,7 +4,9 @@ cd ..
 
 docker build -t model .
 
-docker-compose up --remove-orphans -d
+docker-compose up --remove-orphans 
+
+-d
 
 
 docker image prune

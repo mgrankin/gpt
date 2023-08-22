@@ -3,12 +3,14 @@ version: "3.3"
 # front
 services:
   front:
+    restart: always
     image: front
     container_name: front
     network_mode: host
 
 # traefik 
   traefik:
+    restart: always
     image: "traefik:v2.10"
     container_name: "traefik"
     command:
@@ -28,6 +30,7 @@ services:
 
 # poetry model
   poetry:
+    restart: always
     image: "model"
     shm_size: 1gb
     environment:
@@ -47,6 +50,7 @@ services:
 
 # gpt3 large pelevin
   large2:
+    restart: always
     image: "model"
     shm_size: 1gb
     environment:
@@ -65,6 +69,7 @@ services:
             capabilities: [gpu]
 
   large3:
+    restart: always
     image: "model"
     shm_size: 1gb
     environment:
@@ -86,6 +91,7 @@ services:
 
 
   xl5:
+    restart: always
     image: "model"
     shm_size: 1gb
     environment:
@@ -104,6 +110,7 @@ services:
             capabilities: [gpu]
 
   xl6:
+    restart: always
     image: "model"
     shm_size: 1gb
     environment:
@@ -123,6 +130,7 @@ services:
 
 # fred
   frida1:
+    restart: always
     image: "model"
     shm_size: 1gb
     environment:
