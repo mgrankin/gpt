@@ -1,5 +1,17 @@
 version: "3.3"
 
+x-common-services: &default-service
+    image: "model"
+    restart: always
+    shm_size: 1gb
+    labels:
+      - "traefik.enable=true"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 1s
+      timeout: 1s
+      retries: 200
+
 # front
 services:
   front:
@@ -7,6 +19,19 @@ services:
     image: front
     container_name: front
     network_mode: host
+    depends_on:
+      poetry:
+        condition: service_healthy
+      large2:
+        condition: service_healthy
+      large3:
+        condition: service_healthy
+      xl5:
+        condition: service_healthy
+      xl6:
+         condition: service_healthy
+      frida1:
+         condition: service_healthy
 
 # traefik 
   traefik:
@@ -30,13 +55,10 @@ services:
 
 # poetry model
   poetry:
-    restart: always
-    image: "model"
-    shm_size: 1gb
+    <<: *default-service
     environment:
       - MODEL=large/poetry
     labels:
-      - "traefik.enable=true"
       - "traefik.http.routers.poetry.rule=PathPrefix(`/`)"
       - "traefik.http.routers.poetry.entrypoints=poetry"
       - traefik.http.services.poetry.loadbalancer.server.port=8000
@@ -49,14 +71,13 @@ services:
             capabilities: [gpu]
 
 # gpt3 large pelevin
+#x-large-services: &large-service
+
   large2:
-    restart: always
-    image: "model"
-    shm_size: 1gb
+    <<: *default-service
     environment:
       - MODEL=large/pelevin
     labels:
-      - "traefik.enable=true"
       - "traefik.http.routers.large.rule=PathPrefix(`/`)"
       - "traefik.http.routers.large.entrypoints=large"
       - traefik.http.services.large.loadbalancer.server.port=8000
@@ -69,13 +90,10 @@ services:
             capabilities: [gpu]
 
   large3:
-    restart: always
-    image: "model"
-    shm_size: 1gb
+    <<: *default-service
     environment:
       - MODEL=large/pelevin
     labels:
-      - "traefik.enable=true"
       - "traefik.http.routers.large.rule=PathPrefix(`/`)"
       - "traefik.http.routers.large.entrypoints=large"
       - traefik.http.services.large.loadbalancer.server.port=8000
@@ -88,16 +106,11 @@ services:
             capabilities: [gpu]
 
 # gpt3 XL pelevin
-
-
   xl5:
-    restart: always
-    image: "model"
-    shm_size: 1gb
+    <<: *default-service
     environment:
       - MODEL=xl/pelevin
     labels:
-      - "traefik.enable=true"
       - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
       - "traefik.http.routers.xl.entrypoints=xl"
       - traefik.http.services.xl.loadbalancer.server.port=8000
@@ -110,13 +123,10 @@ services:
             capabilities: [gpu]
 
   xl6:
-    restart: always
-    image: "model"
-    shm_size: 1gb
+    <<: *default-service
     environment:
       - MODEL=xl/pelevin
     labels:
-      - "traefik.enable=true"
       - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
       - "traefik.http.routers.xl.entrypoints=xl"
       - traefik.http.services.xl.loadbalancer.server.port=8000
@@ -130,13 +140,10 @@ services:
 
 # fred
   frida1:
-    restart: always
-    image: "model"
-    shm_size: 1gb
+    <<: *default-service
     environment:
       - MODEL=fred
     labels:
-      - "traefik.enable=true"
       - "traefik.http.routers.frida.rule=PathPrefix(`/`)"
       - "traefik.http.routers.frida.entrypoints=frida"
       - traefik.http.services.frida.loadbalancer.server.port=8000
