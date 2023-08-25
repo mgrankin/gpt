@@ -39,7 +39,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.poetry.rule=PathPrefix(`/`)"
       - "traefik.http.routers.poetry.entrypoints=poetry"
-      - traefik.http.services.model1.loadbalancer.server.port=8000
+      - traefik.http.services.poetry.loadbalancer.server.port=8000
     deploy:
       resources:
         reservations:
