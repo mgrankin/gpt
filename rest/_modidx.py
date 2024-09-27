@@ -10,5 +10,6 @@ d = { 'settings': { 'branch': 'master',
                           'rest.gen.bad_words': ('gen.html#bad_words', 'rest/gen.py'),
                           'rest.gen.generate': ('gen.html#generate', 'rest/gen.py')},
             'rest.large': {'rest.large.get_sample': ('large.html#get_sample', 'rest/large.py')},
+            'rest.lawa': {'rest.lawa.get_sample': ('lawa.html#get_sample', 'rest/lawa.py')},
             'rest.rest_contrastive': {'rest.rest_contrastive.get_sample': ('rest_contrastive.html#get_sample', 'rest/rest_contrastive.py')},
             'rest.xl': {'rest.xl.get_sample': ('xl.html#get_sample', 'rest/xl.py')}}}

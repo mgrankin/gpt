@@ -11,6 +11,6 @@ RUN pip install -r req.txt
 COPY . /opt/app
 
 # bbb
-#CMD uvicorn api:app --host 0.0.0.0 --port 8200
+CMD uvicorn api:app --host 0.0.0.0 --port 8200
 # aaa
-CMD uvicorn api:app --host 0.0.0.0 --port 8281
+#CMD uvicorn api:app --host 0.0.0.0 --port 8281

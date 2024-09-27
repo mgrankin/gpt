@@ -1,7 +1,9 @@
 from os import environ
 model_path = environ["MODEL"]
 
-if 'fred' in model_path:
+if 'lawa' in model_path:
+    from rest.lawa import get_sample
+elif 'fred' in model_path:
     from rest.frida import get_sample
 elif 'xl/' in model_path:
     from rest.xl import get_sample

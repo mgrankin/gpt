@@ -5,7 +5,6 @@ cd ..
 docker build -t model .
 
 docker-compose up --remove-orphans 
-
 -d
 
 

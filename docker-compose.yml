@@ -30,6 +30,15 @@ x-xl-services: &xl-service
     - "traefik.http.routers.xl.entrypoints=xl"
     - traefik.http.services.xl.loadbalancer.server.port=8000
 
+x-lawa-services: &lawa-services
+  <<: *default-service
+  environment:
+    - MODEL=lawa
+  labels:
+    - "traefik.http.routers.lawa.rule=PathPrefix(`/`)"
+    - "traefik.http.routers.lawa.entrypoints=lawa"
+    - traefik.http.services.lawa.loadbalancer.server.port=8000
+
 # front
 services:
   front:
@@ -40,8 +49,6 @@ services:
     depends_on:
       poetry:
         condition: service_healthy
-      large2:
-        condition: service_healthy
       large3:
         condition: service_healthy
       xl5:
@@ -49,6 +56,10 @@ services:
       xl6:
          condition: service_healthy
       frida1:
+         condition: service_healthy
+      lawa1:
+         condition: service_healthy
+      lawa2:
          condition: service_healthy
 
 # traefik 
@@ -65,6 +76,7 @@ services:
       - "--entrypoints.large.address=:7001"
       - "--entrypoints.xl.address=:7002"
       - "--entrypoints.frida.address=:7003"
+      - "--entrypoints.lawa.address=:7004"
     ports:
       - "7000-7100:7000-7100"
       - "8080:8080"
@@ -90,8 +102,18 @@ services:
 
   # gpt3 large pelevin
 
-  large2:
-    <<: *large-service
+  lawa1:
+    <<: *lawa-services
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['0']
+            capabilities: [gpu]
+
+  lawa2:
+    <<: *lawa-services
     deploy:
       resources:
         reservations:

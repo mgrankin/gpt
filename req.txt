@@ -6,8 +6,8 @@ SQLAlchemy
 pandas
 Pillow
 fastapi
-transformers
 tokenizers
+transformers
 diffusers
 datasets
 scipy
