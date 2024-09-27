@@ -23,6 +23,7 @@ def bad_words(tokenizer, allow_linebreak):
         bad_words_ids += bad_points(tokenizer, point)
     linebreaks = [tokenizer.encode(s) for s in ['\n', ' \n']]
     bad_words_ids += [] if allow_linebreak else linebreaks
+    bad_words_ids = [sublist for sublist in bad_words_ids if 50257 not in sublist]
     return bad_words_ids
 
 # %% ../02_gen.ipynb 3

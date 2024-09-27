@@ -53,8 +53,6 @@ services:
         condition: service_healthy
       xl5:
         condition: service_healthy
-      xl6:
-         condition: service_healthy
       frida1:
          condition: service_healthy
       lawa1:
@@ -141,16 +139,6 @@ services:
           devices:
           - driver: nvidia
             device_ids: ['2']
-            capabilities: [gpu]
-
-  xl6:
-    <<: *xl-service
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['3']
             capabilities: [gpu]
 
 # fred

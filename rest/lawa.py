@@ -16,7 +16,7 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained(full_path)
 model = AutoModelForCausalLM.from_pretrained(
     full_path,
     #device_map="auto",
-    torch_dtype='auto'
+    torch_dtype='bfloat16'
 ).eval()
 
 
