@@ -1,7 +1,7 @@
 version: "3.3"
 
 x-common-services: &default-service
-    image: "model"
+    image: "model:latest"
     restart: always
     shm_size: 1gb
     labels:
@@ -31,10 +31,18 @@ x-xl-services: &xl-service
     - traefik.http.services.xl.loadbalancer.server.port=8000
 
 x-lawa-services: &lawa-services
-  <<: *default-service
+  image: "vllm:latest"
+  restart: always
+  shm_size: 1gb
+  healthcheck:
+    test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+    interval: 5s
+    timeout: 1s
+    retries: 20
   environment:
     - MODEL=lawa
   labels:
+    - "traefik.enable=true"
     - "traefik.http.routers.lawa.rule=PathPrefix(`/`)"
     - "traefik.http.routers.lawa.entrypoints=lawa"
     - traefik.http.services.lawa.loadbalancer.server.port=8000
@@ -43,7 +51,7 @@ x-lawa-services: &lawa-services
 services:
   front:
     restart: always
-    image: front
+    image: "front:latest"
     container_name: front
     network_mode: host
     depends_on:

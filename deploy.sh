@@ -4,6 +4,8 @@ cd ..
 
 docker build -t model .
 
+docker build -t vllm -f Dockerfile_vllm .
+
 docker-compose up --remove-orphans 
 -d
 
