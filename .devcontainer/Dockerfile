@@ -1,5 +1,4 @@
-#FROM nvcr.io/nvidia/pytorch:24.09-py3
-FROM nvcr.io/nvidia/pytorch:23.08-py3
+FROM nvcr.io/nvidia/pytorch:24.09-py3
 #FROM vllm/vllm-openai:v0.6.2
 USER root
 

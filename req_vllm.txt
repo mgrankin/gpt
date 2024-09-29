@@ -2,7 +2,6 @@ nbdev
 ipykernel
 tqdm
 ipywidgets
-psycopg2
 SQLAlchemy
 pandas
 Pillow
@@ -28,7 +27,6 @@ boto3
 regex
 uvicorn[standard]
 ninja
-mpi4py
 pytelegrambotapi
 tendo
 docker

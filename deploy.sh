@@ -6,7 +6,8 @@ docker build -t model .
 
 docker build -t vllm -f Dockerfile_vllm .
 
-docker-compose up --remove-orphans 
+docker-compose down --remove-orphans -v
+docker-compose up --remove-orphans --force-recreate
 -d
 
 
