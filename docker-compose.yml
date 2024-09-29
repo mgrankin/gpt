@@ -29,7 +29,7 @@ x-large-services: &large-service
     - traefik.http.services.large.loadbalancer.server.port=8000
 
 x-xl-services: &xl-service
-  <<: *default-service
+  <<: *vllm-service
   environment:
     - MODEL=xl/pelevin
   labels:
@@ -64,8 +64,7 @@ services:
          condition: service_healthy
       lawa1:
          condition: service_healthy
-      lawa2:
-         condition: service_healthy
+
 
 # traefik 
   traefik:
@@ -92,7 +91,7 @@ services:
   poetry:
     <<: *vllm-service
     environment:
-      - MODEL=large/poetry
+      - MODEL=xl/poetry
     labels:
       - "traefik.http.routers.poetry.rule=PathPrefix(`/`)"
       - "traefik.http.routers.poetry.entrypoints=poetry"
@@ -102,7 +101,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['3']
+            device_ids: ['0']
             capabilities: [gpu]
 
   lawa1:
@@ -112,17 +111,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['0']
-            capabilities: [gpu]
-
-  lawa2:
-    <<: *lawa-services
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['2']
+            device_ids: ['1']
             capabilities: [gpu]
 
   large3:
@@ -132,7 +121,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['3']
+            device_ids: ['1']
             capabilities: [gpu]
 
 # gpt3 XL pelevin
@@ -143,7 +132,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['2']
+            device_ids: ['0']
             capabilities: [gpu]
 
 # fred
@@ -160,5 +149,5 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['1']
+            device_ids: ['2']
             capabilities: [gpu]

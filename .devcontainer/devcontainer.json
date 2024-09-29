@@ -40,8 +40,8 @@
 	"mounts": [
 		"source=${localEnv:HOME}/.cache/pip,target=/root/.cache/pip,type=bind,consistency=cached"
 	],
-//	"postCreateCommand": "pip install -r req_vllm.txt",
-	"postCreateCommand": "pip install -r req.txt",
+	"postCreateCommand": "pip install -r req_vllm.txt",
+//	"postCreateCommand": "pip install -r req.txt",
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }

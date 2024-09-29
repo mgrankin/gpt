@@ -15,7 +15,7 @@ model_path = getenv("MODEL")
 # %% ../07_lawa.ipynb 5
 full_path = f'./models/{model_path}'
 tokenizer = AutoTokenizer.from_pretrained(full_path)
-model = LLM(model=full_path, dtype="bfloat16", device="cuda", gpu_memory_utilization=0.33)
+model = LLM(model=full_path, dtype="bfloat16", device="cuda", gpu_memory_utilization=0.40)
 
 # %% ../07_lawa.ipynb 7
 stop_tokens = ['<|endoftext|>','|eot_id|','<|end_of_text|>','<|eot_id|>']
