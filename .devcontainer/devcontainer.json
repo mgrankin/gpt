@@ -7,7 +7,8 @@
 	//"image": "nvcr.io/nvidia/pytorch:23.04-py3",
 	"build": {
         // Path is relataive to the devcontainer.json file.
-        "dockerfile": "Dockerfile"
+        "dockerfile": "Dockerfile",
+		"args": { "BUILDKIT_INLINE_CACHE": "1", "DOCKER_BUILDKIT": "1" } 
     }, 
 
 	"runArgs": [

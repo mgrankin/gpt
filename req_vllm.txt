@@ -12,7 +12,6 @@ diffusers
 datasets
 scipy
 dateparser
-vllm
 matplotlib
 plotly
 ftfy
@@ -31,3 +30,4 @@ pytelegrambotapi
 tendo
 docker
 httpx
+vllm

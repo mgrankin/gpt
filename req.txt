@@ -2,7 +2,6 @@ nbdev
 ipykernel
 tqdm
 ipywidgets
-psycopg2
 SQLAlchemy
 pandas
 Pillow
