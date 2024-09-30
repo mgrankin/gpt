@@ -2,7 +2,6 @@ nbdev
 ipykernel
 tqdm
 ipywidgets
-SQLAlchemy
 pandas
 Pillow
 fastapi
@@ -17,7 +16,6 @@ plotly
 ftfy
 schedule
 psutil
-pymilvus
 wrapt
 tensorboard
 nltk
@@ -26,11 +24,8 @@ boto3
 regex
 uvicorn[standard]
 ninja
-mpi4py
 pytelegrambotapi
 tendo
 docker
 httpx
-deepspeed
-text-generation
 optimum[onnxruntime-gpu]

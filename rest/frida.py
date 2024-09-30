@@ -6,8 +6,6 @@ __all__ = ['model_path', 'seq_length', 'full_path', 'tokenizer', 'model', 'iftok
 # %% ../06_frida.ipynb 3
 from os import getenv
 model_path = getenv("MODEL")
-from .gen import generate
-
 
 # %% ../06_frida.ipynb 5
 from optimum.onnxruntime import ORTModelForSeq2SeqLM
@@ -29,8 +27,6 @@ def iftoken(tokenizer, tokens):
     token_ids = [tokenizer.encode(token, add_special_tokens=False) for token in tokens]
     return [id for sublist in token_ids for id in sublist if len(sublist) == 1]
 
-
-
 # %% ../06_frida.ipynb 11
 from front.common import process_seq
 
@@ -43,10 +39,11 @@ def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temper
     
     lm_text = '<LM>' + prompt
     input_ids=torch.tensor([tokenizer.encode(lm_text)]).cuda()
+    torch.cuda.empty_cache()
     output_ids = model.generate(input_ids, do_sample=True, temperature=temperature, repetition_penalty=5.0, typical_p=0.9, top_k=10, top_p=0.95, #watermark=False,
                         max_new_tokens=length, bad_words_ids = bad_words_ids,
                         num_return_sequences=num_samples,)
-
+    
     result = [tokenizer.decode(o[1:]).replace('\n', ' ') for o in output_ids]
     result = process_seq(result)
     return result

@@ -6,8 +6,13 @@ docker buildx build -t model .
 
 docker buildx build -t vllm -f Dockerfile_vllm .
 
+
+docker-compose stop frida1
+docker-compose up --remove-orphans --force-recreate frida1
+
 docker-compose down --remove-orphans -v
 docker-compose up --remove-orphans --force-recreate
+
 -d
 
 

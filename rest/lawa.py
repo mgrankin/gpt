@@ -56,6 +56,7 @@ def get_sampling_params(tokenizer, length: int, num_samples: int, allow_linebrea
         ignore_eos=True,
         logits_processors=[token_blocker],
         repetition_penalty=2.,
+        #penalty_alpha=0.6, top_k=4
     )
 
 # %% ../07_lawa.ipynb 8
