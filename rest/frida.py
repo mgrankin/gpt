@@ -21,17 +21,20 @@ from transformers import GPT2Tokenizer, T5ForConditionalGeneration, AutoTokenize
 tokenizer = GPT2Tokenizer.from_pretrained(full_path+'/optimized/', eos_token='</s>')
 model = ORTModelForSeq2SeqLM.from_pretrained(full_path+'/optimized/', provider="CUDAExecutionProvider")
 
-# %% ../06_frida.ipynb 10
+# %% ../06_frida.ipynb 11
 def iftoken(tokenizer, tokens):
     # returns token id if the given string is one token
     token_ids = [tokenizer.encode(token, add_special_tokens=False) for token in tokens]
     return [id for sublist in token_ids for id in sublist if len(sublist) == 1]
 
-# %% ../06_frida.ipynb 11
+# %% ../06_frida.ipynb 12
 from front.common import process_seq
 
-def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temperature:float=0.5):
-    blocked_tokens = ['[', '(', '\xa0', '*', '­', '~', '_', '\\', '\uf04a', '\ufeff', '\u2028']
+def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temperature:float=0.1):
+    max_input = 2*1024 - length
+    prompt = tokenizer.decode(tokenizer.encode(prompt)[-max_input:]).removeprefix('<|begin_of_text|>')
+
+    blocked_tokens = ['[', ' [', '(', ' (', '\xa0', '*', '­', '~', '_', '\\', '\uf04a', '\ufeff', '\u2028']
     if not allow_linebreak:
         blocked_tokens.extend(['\n', '\n\n',' \n'])
     bad_words_ids = iftoken(tokenizer, blocked_tokens)

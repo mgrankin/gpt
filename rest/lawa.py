@@ -9,15 +9,15 @@ from os import getenv
 from vllm import LLM, SamplingParams
 from transformers import AutoTokenizer
 from front.common import process_seq
-
+import random
 model_path = getenv("MODEL")
 
 # %% ../07_lawa.ipynb 5
 full_path = f'./models/{model_path}'
 tokenizer = AutoTokenizer.from_pretrained(full_path)
-model = LLM(model=full_path, dtype="bfloat16", device="cuda", gpu_memory_utilization=0.40)
+model = LLM(model=full_path, dtype="float16", device="cuda", gpu_memory_utilization=0.40)
 
-# %% ../07_lawa.ipynb 6
+# %% ../07_lawa.ipynb 7
 def iftoken(tokenizer, tokens):
     # returns token id if the given string is one token
     token_ids = [tokenizer.encode(token, add_special_tokens=False) for token in tokens]
@@ -40,30 +40,34 @@ def create_token_blocker(tokenizer, blocked_tokens):
     return token_blocker
     
 def get_sampling_params(tokenizer, length: int, num_samples: int, allow_linebreak: bool, temperature: float):
-    blocked_tokens = ['[', '(', '\xa0', '*', '­', '~', '_', '\\', '\uf04a', '\ufeff', '\u2028']
+    blocked_tokens = ['.\n','\n\t\t','http://',',[','("','.]',' («',')','\u2004',']','(«','[', ' [', '(', ' (', '\xa0', '*', '­', '~', '_', '\\', '\uf04a', '\ufeff', '\u2028']
     if not allow_linebreak:
         blocked_tokens.extend(['\n', '\n\n',' \n'])
     
     token_blocker = create_token_blocker(tokenizer, blocked_tokens)
-
     return SamplingParams(
-        temperature=temperature,
         max_tokens=length,
         n=num_samples,
-        top_p=0.9,
         top_k=-1,
         stop_token_ids=stop_token_ids,
         ignore_eos=True,
         logits_processors=[token_blocker],
         repetition_penalty=2.,
-        #penalty_alpha=0.6, top_k=4
+        temperature=temperature,
+        top_p=0.9,
+        seed=random.randint(0, 1000000),
+#        use_beam_search=True,
+#        best_of=num_samples*4,
+#        temperature=0.,
+#        top_p=1.,
+         #penalty_alpha=0.6, top_k=4
     )
 
-# %% ../07_lawa.ipynb 8
-def get_sample(prompt: str, length: int, num_samples: int, allow_linebreak: bool, temperature: float = 1.0):
+# %% ../07_lawa.ipynb 9
+def get_sample(prompt: str, length: int, num_samples: int, allow_linebreak: bool, temperature: float = 0.2):
+    max_input = model.llm_engine.model_config.max_model_len - length
+    prompt = tokenizer.decode(tokenizer.encode(prompt)[-max_input:]).removeprefix('<|begin_of_text|>')
     sampling_params = get_sampling_params(tokenizer, length, num_samples, allow_linebreak, temperature)
     outputs = model.generate(prompt, sampling_params)
-    
     generated_sequences = [oo.text for o in outputs for oo in o.outputs]
     return process_seq(generated_sequences)
-

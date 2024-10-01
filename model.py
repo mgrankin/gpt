@@ -17,7 +17,7 @@ app = FastAPI(title=f"Serving {model_path}", version="0.1",)
 @app.post("/generate/")
 def gen_sample(prompt: Prompt, request: Request):
     with lock:
-        return {"replies": get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak)}
+        return {"replies": get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak, prompt.temperature)}
 
 @app.get("/health")
 def healthcheck():
