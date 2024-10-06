@@ -60,7 +60,7 @@ class GPT3ParallelSelfAttention(torch.nn.Module):
                  use_deepspeed_sparse=None):
         super(GPT3ParallelSelfAttention, self).__init__()
         self.use_deepspeed_sparse = use_deepspeed_sparse
-        if DEEPSPEED_WRAP:
+        if DEEPSPEED_WRAP or self.use_deepspeed_sparse:
             deepspeed = DEEPSPEED_WRAP.deepspeed
             from deepspeed.ops.sparse_attention import SparseSelfAttention
         if self.use_deepspeed_sparse is not None:

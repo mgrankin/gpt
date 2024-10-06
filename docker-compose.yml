@@ -23,6 +23,7 @@ x-large-services: &large-service
   <<: *vllm-service
   environment:
     - MODEL=large/pelevin
+    - gpu_fraction=40
   labels:
     - "traefik.http.routers.large.rule=PathPrefix(`/`)"
     - "traefik.http.routers.large.entrypoints=large"
@@ -32,15 +33,27 @@ x-xl-services: &xl-service
   <<: *vllm-service
   environment:
     - MODEL=xl/pelevin
+    - gpu_fraction=40
   labels:
     - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
     - "traefik.http.routers.xl.entrypoints=xl"
     - traefik.http.services.xl.loadbalancer.server.port=8000
 
+x-mig-services: &mig-services
+  <<: *vllm-service
+  environment:
+    - MODEL=mig
+    - gpu_fraction=35
+  labels:
+    - "traefik.http.routers.mig.rule=PathPrefix(`/`)"
+    - "traefik.http.routers.mig.entrypoints=mig"
+    - traefik.http.services.mig.loadbalancer.server.port=8000
+
 x-lawa-services: &lawa-services
   <<: *vllm-service
   environment:
     - MODEL=lawa
+    - gpu_fraction=40
   labels:
     - "traefik.http.routers.lawa.rule=PathPrefix(`/`)"
     - "traefik.http.routers.lawa.entrypoints=lawa"
@@ -54,13 +67,15 @@ services:
     container_name: front
     network_mode: host
     depends_on:
-      poetry:
-        condition: service_healthy
+#      poetry:
+#        condition: service_healthy
       large3:
         condition: service_healthy
       xl5:
         condition: service_healthy
       frida1:
+         condition: service_healthy
+      mig1:
          condition: service_healthy
       lawa1:
          condition: service_healthy
@@ -80,7 +95,8 @@ services:
       - "--entrypoints.large.address=:7001"
       - "--entrypoints.xl.address=:7002"
       - "--entrypoints.frida.address=:7003"
-      - "--entrypoints.lawa.address=:7004"
+      - "--entrypoints.mig.address=:7004"
+      - "--entrypoints.lawa.address=:7005"
     ports:
       - "7000-7100:7000-7100"
       - "8080:8080"
@@ -88,24 +104,35 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
 # poetry model
-  poetry:
-    <<: *vllm-service
-    environment:
-      - MODEL=xl/poetry
-    labels:
-      - "traefik.http.routers.poetry.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.poetry.entrypoints=poetry"
-      - traefik.http.services.poetry.loadbalancer.server.port=8000
+  # poetry:
+  #   <<: *vllm-service
+  #   environment:
+  #     - MODEL=xl/poetry
+  #   labels:
+  #     - "traefik.http.routers.poetry.rule=PathPrefix(`/`)"
+  #     - "traefik.http.routers.poetry.entrypoints=poetry"
+  #     - traefik.http.services.poetry.loadbalancer.server.port=8000
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #         - driver: nvidia
+  #           device_ids: ['0']
+  #           capabilities: [gpu]
+
+  # gpt3 XL pelevin
+  xl5:
+    <<: *xl-service
     deploy:
       resources:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['0']
+            device_ids: ['1']
             capabilities: [gpu]
 
-  lawa1:
-    <<: *lawa-services
+  mig1:
+    <<: *mig-services
     deploy:
       resources:
         reservations:
@@ -121,18 +148,17 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['1']
+            device_ids: ['2']
             capabilities: [gpu]
 
-# gpt3 XL pelevin
-  xl5:
-    <<: *xl-service
+  lawa1:
+    <<: *lawa-services
     deploy:
       resources:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['0']
+            device_ids: ['2']
             capabilities: [gpu]
 
 # fred
@@ -149,5 +175,5 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['2']
+            device_ids: ['0']
             capabilities: [gpu]

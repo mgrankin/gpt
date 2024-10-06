@@ -34,7 +34,7 @@ def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temper
     max_input = 2*1024 - length
     prompt = tokenizer.decode(tokenizer.encode(prompt)[-max_input:]).removeprefix('<|begin_of_text|>')
 
-    blocked_tokens = ['[', ' [', '(', ' (', '\xa0', '*', '­', '~', '_', '\\', '\uf04a', '\ufeff', '\u2028']
+    blocked_tokens = ["».",'.\n','\n\t\t','http://',',[','("','.]',' («',')','\u2004',']','(«','[', ' [', '(', ' (', '\xa0', '*', '­', '~', '_', '\\', '\uf04a', '\ufeff', '\u2028']
     if not allow_linebreak:
         blocked_tokens.extend(['\n', '\n\n',' \n'])
     bad_words_ids = iftoken(tokenizer, blocked_tokens)

@@ -117,3 +117,8 @@ venv.bak/
 _quarto.yml
 .github/workflows/deploy.yaml
 .github/workflows/test.yaml
+candidates
+results
+dataset
+candidates/
+base_models/

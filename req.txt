@@ -28,4 +28,5 @@ pytelegrambotapi
 tendo
 docker
 httpx
+deepspeed
 optimum[onnxruntime-gpu]
