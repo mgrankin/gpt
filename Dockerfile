@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:24.09-py3
+FROM nvcr.io/nvidia/pytorch:25.03-py3
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive

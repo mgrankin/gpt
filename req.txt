@@ -7,8 +7,9 @@ Pillow
 fastapi
 tokenizers
 transformers
+peft
+bitsandbytes
 diffusers
-datasets
 scipy
 dateparser
 matplotlib
@@ -29,4 +30,6 @@ tendo
 docker
 httpx
 deepspeed
-optimum[onnxruntime-gpu]
+datasets
+optimum[onnxruntime-gpu]>=1.24.0
+git+https://github.com/mgrankin/character-tokenizer

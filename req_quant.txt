@@ -1,0 +1,13 @@
+nbdev
+ipykernel
+tqdm
+ipywidgets
+pandas
+Pillow
+tokenizers
+transformers
+datasets
+llmcompressor==0.5.2a20250505
+datasets>=3.1.0,<3.6
+dill==0.3.8
+zstandard

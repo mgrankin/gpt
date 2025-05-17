@@ -122,3 +122,7 @@ results
 dataset
 candidates/
 base_models/
+tuned_models/
+tensorboard/
+tgi_data/
+output/

@@ -23,7 +23,7 @@ x-large-services: &large-service
   <<: *vllm-service
   environment:
     - MODEL=large/pelevin
-    - gpu_fraction=40
+    - gpu_fraction=20
   labels:
     - "traefik.http.routers.large.rule=PathPrefix(`/`)"
     - "traefik.http.routers.large.entrypoints=large"
@@ -33,7 +33,7 @@ x-xl-services: &xl-service
   <<: *vllm-service
   environment:
     - MODEL=xl/pelevin
-    - gpu_fraction=40
+    - gpu_fraction=20
   labels:
     - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
     - "traefik.http.routers.xl.entrypoints=xl"
@@ -43,7 +43,7 @@ x-mig-services: &mig-services
   <<: *vllm-service
   environment:
     - MODEL=mig
-    - gpu_fraction=35
+    - gpu_fraction=20
   labels:
     - "traefik.http.routers.mig.rule=PathPrefix(`/`)"
     - "traefik.http.routers.mig.entrypoints=mig"
@@ -53,7 +53,7 @@ x-lawa-services: &lawa-services
   <<: *vllm-service
   environment:
     - MODEL=lawa
-    - gpu_fraction=40
+    - gpu_fraction=20
   labels:
     - "traefik.http.routers.lawa.rule=PathPrefix(`/`)"
     - "traefik.http.routers.lawa.entrypoints=lawa"
@@ -120,17 +120,6 @@ services:
   #           device_ids: ['0']
   #           capabilities: [gpu]
 
-  # gpt3 XL pelevin
-  xl5:
-    <<: *xl-service
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['1']
-            capabilities: [gpu]
-
   mig1:
     <<: *mig-services
     deploy:
@@ -138,17 +127,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['1']
-            capabilities: [gpu]
-
-  large3:
-    <<: *large-service
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['2']
+            device_ids: ['0']
             capabilities: [gpu]
 
   lawa1:
@@ -158,10 +137,36 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['2']
+            device_ids: ['0']
+            capabilities: [gpu]
+    depends_on:
+      mig1:
+         condition: service_healthy
+
+  # gpt3 XL pelevin
+  xl5:
+    <<: *xl-service
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['0']
+            capabilities: [gpu]
+    depends_on:
+      lawa1:
+         condition: service_healthy
+
+  large3:
+    <<: *large-service
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['1']
             capabilities: [gpu]
 
-# fred
   frida1:
     <<: *default-service
     environment:
@@ -175,5 +180,9 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['0']
+            device_ids: ['1']
             capabilities: [gpu]
+    depends_on:
+      large3:
+         condition: service_healthy
+
