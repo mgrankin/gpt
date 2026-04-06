@@ -1,5 +1,3 @@
-version: "3.3"
-
 x-shared-services: &shared-service
     restart: always
     shm_size: 1gb
@@ -185,4 +183,3 @@ services:
     depends_on:
       large3:
          condition: service_healthy
-
