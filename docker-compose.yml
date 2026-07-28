@@ -64,6 +64,8 @@ services:
     image: "front:latest"
     container_name: front
     network_mode: host
+    labels:
+      - "traefik.enable=false"
     depends_on:
 #      poetry:
 #        condition: service_healthy
@@ -178,7 +180,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['1']
+            device_ids: ['2']
             capabilities: [gpu]
     depends_on:
       large3:
