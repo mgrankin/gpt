@@ -8,6 +8,8 @@ docker buildx build -t model .
 
 docker buildx build -t vllm -f Dockerfile_vllm .
 
+docker buildx build --load -t sparse-xl -f Dockerfile_sparse_xl .
+
 docker-compose down --remove-orphans -v
 
 docker-compose up --remove-orphans --force-recreate

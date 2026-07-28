@@ -1,0 +1,22 @@
+FROM nvcr.io/nvidia/pytorch:26.01-py3
+
+USER root
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HUB_OFFLINE=1
+
+COPY req_sparse_xl.txt /opt/app/req_sparse_xl.txt
+WORKDIR /opt/app
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r req_sparse_xl.txt
+
+COPY model.py validate_xl.py /opt/app/
+COPY front/common.py /opt/app/front/common.py
+COPY rest/__init__.py rest/gen.py rest/original.py /opt/app/rest/
+COPY src/__init__.py src/modeling_xl.py src/sparse_attention.py \
+    src/xl_wrapper.py /opt/app/src/
+
+EXPOSE 8000/tcp
+
+ENTRYPOINT ["uvicorn"]
+CMD ["model:app", "--host", "0.0.0.0", "--port", "8000"]

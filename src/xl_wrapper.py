@@ -1,308 +1,359 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import os
-import random
-from typing import Union, Iterable
+"""High-level tokenizer, inference, and generation wrapper for ruGPT3XL."""
 
-import numpy as np
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, Sequence
+
 import torch
-from deepspeed import DeepSpeedConfig
-from torch.nn import CrossEntropyLoss
-from transformers import GPT2Tokenizer, PreTrainedModel, PretrainedConfig
+import torch.nn.functional as F
+from torch import nn
+from transformers import GPT2Tokenizer
 
-from src import mpu
-from .fp16 import FP16_Module
-from .model import GPT3Model
-from .download_utils import download_model_files
-from transformers.utils import logging
+from .modeling_xl import RuGPT3XLModel
 
 
-logger = logging.get_logger(__name__)
-NoneType = type(None)
+DEFAULT_MODEL_ID = "sberbank-ai/rugpt3xl"
 
 
-def get_deepspeed_config(path):
-    return DeepSpeedConfig(path)
+@dataclass
+class ModelOutput:
+    logits: torch.Tensor
+    loss: torch.Tensor | None = None
 
-
-def get_sparse_attention_config(path, num_heads):
-    ds_config = get_deepspeed_config(path)
-    if hasattr(ds_config, 'sparse_attention') and ds_config.sparse_attention:
-        sa_config = ds_config.sparse_attention
-        sa_mode = sa_config.get('mode')
-        if sa_mode == 'dense':
-            from deepspeed.ops.sparse_attention import DenseSparsityConfig as STConfig
-        elif sa_mode == 'fixed':
-            from deepspeed.ops.sparse_attention import FixedSparsityConfig as STConfig
-        elif sa_mode == 'bigbird':
-            from deepspeed.ops.sparse_attention import BigBirdSparsityConfig as STConfig
-        elif sa_mode == 'bslongformer':
-            from deepspeed.ops.sparse_attention import BSLongformerSparsityConfig as STConfig
-        elif sa_mode == 'variable':
-            from deepspeed.ops.sparse_attention import VariableSparsityConfig as STConfig
-        else:
-            raise NotImplementedError(
-                f'Given sparsity mode, {sa_mode}, has not been implemented yet!'
-            )
-        del sa_config['mode']
-        return STConfig(num_heads=num_heads, **sa_config)
-    else:
-        return None
-
-
-def get_model(deepspeed_config_path):
-    num_local_heads = 16
-    sparse_mode = 'alternating'
-    deepspeed_sparsity_config = get_sparse_attention_config(deepspeed_config_path, num_local_heads)
-    if deepspeed_sparsity_config is not None:
-        logger.info(f"Use sparse attention with mode {sparse_mode}")
-    else:
-        logger.info(f"Use dense attention")
-    model = GPT3Model(num_layers=24,
-                      vocab_size=50264,
-                      hidden_size=2048,
-                      num_attention_heads=num_local_heads,
-                      embedding_dropout_prob=0.1, attention_dropout_prob=0.1, output_dropout_prob=0.1,
-                      max_sequence_length=2048,
-                      checkpoint_activations=False,
-                      checkpoint_num_layers=1,
-                      parallel_output=False,
-                      deepspeed_sparsity_config=deepspeed_sparsity_config,
-                      sparse_mode=sparse_mode).half()
-    # GPU allocation.
-    model.cuda(torch.cuda.current_device())
-
-    # Fp16 conversion.
-    model = FP16_Module(model)
-
-    return model
-
-
-def setup_model(weights_path, deepspeed_config_path):
-    model = get_model(deepspeed_config_path)
-    logger.info("Load checkpoint from " + weights_path)
-    checkpoint = torch.load(weights_path, map_location=lambda storage, loc: storage)
-    checkpoint = {k.strip('module.module.'):v for k,v in checkpoint.items()}
-    model.load_state_dict(checkpoint, strict=False)
-    model.eval()
-    logger.info("Model Loaded")
-    return model
-
-
-def get_masks_and_position_ids(data,
-                               eod_token,
-                               reset_position_ids,
-                               reset_attention_mask):
-    # Extract batch size and sequence length.
-    batch_size, seq_length = data.size()
-
-    # Attention mask (lower triangular).
-    if reset_attention_mask:
-        att_mask_batch = batch_size
-    else:
-        att_mask_batch = 1
-    attention_mask = torch.tril(torch.ones(
-        (att_mask_batch, seq_length, seq_length), device=data.device)).view(
-        att_mask_batch, 1, seq_length, seq_length)
-
-    # Loss mask.
-    loss_mask = torch.ones(data.size(), dtype=torch.float, device=data.device)
-    loss_mask[data == eod_token] = 0.0
-
-    # Position ids.
-    position_ids = torch.arange(seq_length, dtype=torch.long,
-                                device=data.device)
-    position_ids = position_ids.unsqueeze(0).expand_as(data)
-    # We need to clone as the ids will be modifed based on batch index.
-    if reset_position_ids:
-        position_ids = position_ids.clone()
-
-    if reset_position_ids or reset_attention_mask:
-        # Loop through the batches:
-        for b in range(batch_size):
-
-            # Find indices where EOD token is.
-            eod_index = position_ids[b, data[b] == eod_token]
-            # Detach indecies from positions if going to modify positions.
-            if reset_position_ids:
-                eod_index = eod_index.clone()
-
-            # Loop through EOD indices:
-            prev_index = 0
-            for j in range(eod_index.size()[0]):
-                i = eod_index[j]
-                # Mask attention loss.
-                if reset_attention_mask:
-                    attention_mask[b, 0, (i + 1):, :(i + 1)] = 0
-                # Reset positions.
-                if reset_position_ids:
-                    position_ids[b, (i + 1):] -= (i + 1 - prev_index)
-                    prev_index = i + 1
-
-    return attention_mask, loss_mask, position_ids
-
-
-class ModelOutput(object):
-    def __init__(self, logits, loss=None):
-        self.logits = logits
-        self.loss = loss
-
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> torch.Tensor | None:
         if key == "logits":
             return self.logits
-        raise StopIteration
+        if key == "loss":
+            return self.loss
+        raise KeyError(key)
 
 
-class RuGPT3XL(PreTrainedModel):
-    def __init__(self, model, tokenizer, model_path, seq_len=512):
-        super().__init__(PretrainedConfig())
+class RuGPT3XL(nn.Module):
+    """Compatibility wrapper around the modern PyTorch model.
+
+    Unlike the legacy wrapper, this class does not initialize a distributed
+    process group and does not import DeepSpeed or Apex.
+    """
+
+    def __init__(
+        self,
+        model: RuGPT3XLModel,
+        tokenizer: GPT2Tokenizer,
+        model_path: str,
+        *,
+        seq_len: int = 512,
+    ) -> None:
+        super().__init__()
         self.model = model
-        self.pad_token_id = tokenizer.encoder['<pad>']
-        self.eos_token_id = tokenizer.encoder['<|endoftext|>']
-        self.seq_len = seq_len
-        self.model_path = model_path
         self.tokenizer = tokenizer
+        self.model_path = model_path
+        self.seq_len = seq_len
+        vocabulary = tokenizer.get_vocab()
+        self.pad_token_id = vocabulary["<pad>"]
+        self.eos_token_id = vocabulary["<|endoftext|>"]
+
+    @property
+    def device(self) -> torch.device:
+        return next(self.model.parameters()).device
+
+    @property
+    def dtype(self) -> torch.dtype:
+        return next(self.model.parameters()).dtype
 
     @classmethod
-    def from_pretrained(cls, model_name_or_path=None, seq_len=512, weights_path=None, deepspeed_config_path=None):
-        init_method = 'tcp://' + os.getenv('MASTER_ADDR', 'localhost') + ':' + os.getenv('MASTER_PORT', '6000')
-        try:
-            torch.distributed.init_process_group(backend='nccl', world_size=1, rank=0, init_method=init_method)
-            mpu.initialize_model_parallel(1)
-        except RuntimeError:
-            print("The default process group has already initialized...")
+    def from_pretrained(
+        cls,
+        model_name_or_path: str = DEFAULT_MODEL_ID,
+        *,
+        seq_len: int = 512,
+        weights_path: str | Path | None = None,
+        deepspeed_config_path: str | Path | None = None,
+        local_files_only: bool = False,
+        device: torch.device | str | None = None,
+        dtype: torch.dtype = torch.float16,
+        **_: object,
+    ) -> "RuGPT3XL":
+        """Load a tokenizer and local or Hub legacy checkpoint."""
 
-        #seed = 1234
-        #random.seed(seed)
-        #np.random.seed(seed)
-        #torch.manual_seed(seed)
-        #mpu.model_parallel_cuda_manual_seed(seed)
-        tokenizer = GPT2Tokenizer.from_pretrained('./tokenizer/rugpt3xl.tokenizer', local_files_only=True)
-        logger.info("Check cached model files...")
+        # Kept for source compatibility with old callers. The exact fixed
+        # sparsity configuration now belongs to the architecture.
+        del deepspeed_config_path
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        if torch.device(device).type == "cpu" and dtype == torch.float16:
+            dtype = torch.float32
+
+        tokenizer = GPT2Tokenizer.from_pretrained(
+            model_name_or_path,
+            local_files_only=local_files_only,
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = "<pad>"
+
         if weights_path is None:
-            weights_path, deepspeed_config_path = download_model_files(model_name_or_path)
-        model = setup_model(weights_path, deepspeed_config_path)
-        model.cuda()
-        model = model.eval()
-        return cls(model, tokenizer=tokenizer, seq_len=seq_len, model_path=model_name_or_path)
+            from huggingface_hub import hf_hub_download
 
-    def prepare_inputs_for_generation(self, input_ids: torch.LongTensor, **kwargs):
-        kwargs.update({"input_ids": input_ids})
+            weights_path = hf_hub_download(
+                repo_id=model_name_or_path,
+                filename="mp_rank_00_model_states.pt",
+                local_files_only=local_files_only,
+            )
+
+        model = RuGPT3XLModel.from_checkpoint(
+            weights_path, device=device, dtype=dtype
+        )
+        model.eval()
+        return cls(
+            model,
+            tokenizer=tokenizer,
+            seq_len=seq_len,
+            model_path=model_name_or_path,
+        )
+
+    def prepare_inputs_for_generation(
+        self, input_ids: torch.LongTensor, **kwargs: object
+    ) -> dict[str, object]:
+        kwargs["input_ids"] = input_ids
         return kwargs
 
-    def generate(
-            self, text: Union[str, NoneType] = None,
-            input_ids: Union[torch.LongTensor, NoneType] = None,
-            max_length: Union[int, None] = None,
-            min_length: Union[int, NoneType] = None,
-            do_sample: Union[bool, NoneType] = None,
-            early_stopping: Union[bool, NoneType] = None,
-            num_beams: Union[int, NoneType] = None,
-            temperature: Union[float, NoneType] = None,
-            top_k: Union[int, NoneType] = None,
-            top_p: Union[float, NoneType] = None,
-            repetition_penalty: Union[float, NoneType] = None,
-            bad_words_ids: Union[Iterable[int], NoneType] = None,
-            bos_token_id: Union[int, NoneType] = None,
-            pad_token_id: Union[int, NoneType] = None,
-            eos_token_id: Union[int, NoneType] = None,
-            length_penalty: Union[float, NoneType] = None,
-            no_repeat_ngram_size: Union[int, NoneType] = None,
-            num_return_sequences: Union[int, NoneType] = None,
-            decoder_start_token_id: Union[int, NoneType] = None,
-            use_cache: Union[bool, NoneType] = None,
-            **model_kwargs):
-        if text is not None:
-            input_ids = torch.cuda.LongTensor([self.tokenizer(text)['input_ids']])
-        if eos_token_id is None:
-            eos_token_id = self.eos_token_id
-        if pad_token_id is None:
-            pad_token_id = self.pad_token_id
-        res = super().generate(
-            input_ids=input_ids,
-            max_length=max_length,
-            min_length=min_length,
-            do_sample=do_sample,
-            early_stopping=early_stopping,
-            num_beams=num_beams,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
-            repetition_penalty=repetition_penalty,
-            bad_words_ids=bad_words_ids,
-            bos_token_id=bos_token_id,
-            pad_token_id=pad_token_id,
-            eos_token_id=eos_token_id,
-            length_penalty=length_penalty,
-            no_repeat_ngram_size=no_repeat_ngram_size,
-            num_return_sequences=num_return_sequences,
-            decoder_start_token_id=decoder_start_token_id,
-            use_cache=use_cache,
-            **model_kwargs
-        )
-        return res # list(map(self.tokenizer.decode, res.tolist()))
-
-    def __call__(self, text=None, input_ids=None, labels=None, **kwargs):
+    def forward(
+        self,
+        input_ids: torch.Tensor | Sequence[Sequence[int]] | None = None,
+        *,
+        text: str | None = None,
+        labels: torch.Tensor | Sequence[Sequence[int]] | None = None,
+        **_: object,
+    ) -> ModelOutput:
         if input_ids is None:
-            if text is None:
-                text = ""
-            input_ids = torch.cuda.LongTensor([self.tokenizer(text)['input_ids']])
-        if isinstance(input_ids, list):
-            input_ids = torch.cuda.LongTensor(input_ids)
-        if isinstance(labels, list):
-            labels = torch.cuda.LongTensor(labels)
-        res = []
-        if labels is not None:
-            lbls = labels
-        else:
-            lbls = [None] * len(input_ids)
+            encoded = self.tokenizer.encode(
+                text or "", add_special_tokens=False
+            )
+            input_ids = [encoded]
+        input_tensor = torch.as_tensor(
+            input_ids, dtype=torch.long, device=self.device
+        )
+        logits = self.model(input_tensor)
+
         loss = None
-        original_context_length = 0
-        seq_len = self.seq_len
-        for tokens, lbl in zip(input_ids, lbls):
-            context_tokens = tokens.tolist()
-            context_length = len(context_tokens)
-            original_context_length = len(context_tokens)
-            
-            while context_length > seq_len:
-                seq_len += 16
-            if context_length < seq_len:
-                context_tokens.extend([self.pad_token_id] * (seq_len - context_length))
-                if labels is not None:
-                    lbl = lbl.tolist()
-                    lbl.extend([self.pad_token_id] * (seq_len - context_length))
-                    lbl = torch.cuda.LongTensor(lbl)
-            if context_length > 2048:
-                context_tokens = context_tokens[-2048:]
-                if labels is not None:
-                    lbl = lbl.tolist()[-2048:]
-                    lbl = torch.cuda.LongTensor(lbl)
-            context_tokens_tensor = torch.cuda.LongTensor(context_tokens)
-            context_length_tensor = torch.cuda.LongTensor([context_length])
+        if labels is not None:
+            label_tensor = torch.as_tensor(
+                labels, dtype=torch.long, device=self.device
+            )
+            if label_tensor.shape != input_tensor.shape:
+                raise ValueError("labels and input_ids must have equal shapes")
+            loss = F.cross_entropy(
+                logits[:, :-1].float().reshape(-1, logits.shape[-1]),
+                label_tensor[:, 1:].reshape(-1),
+                ignore_index=self.pad_token_id,
+            )
+        return ModelOutput(logits=logits, loss=loss)
 
-            torch.distributed.broadcast(context_length_tensor, mpu.get_model_parallel_src_rank(),
-                                        group=mpu.get_model_parallel_group())
-            torch.distributed.broadcast(context_tokens_tensor, mpu.get_model_parallel_src_rank(),
-                                        group=mpu.get_model_parallel_group())
+    @torch.inference_mode()
+    def generate(
+        self,
+        text: str | None = None,
+        input_ids: torch.Tensor | Sequence[Sequence[int]] | None = None,
+        max_length: int | None = None,
+        min_length: int | None = None,
+        do_sample: bool | None = None,
+        early_stopping: bool | None = None,
+        num_beams: int | None = None,
+        temperature: float | None = None,
+        top_k: int | None = None,
+        top_p: float | None = None,
+        repetition_penalty: float | None = None,
+        bad_words_ids: Iterable[Iterable[int]] | None = None,
+        bos_token_id: int | None = None,
+        pad_token_id: int | None = None,
+        eos_token_id: int | None = None,
+        length_penalty: float | None = None,
+        no_repeat_ngram_size: int | None = None,
+        num_return_sequences: int | None = None,
+        decoder_start_token_id: int | None = None,
+        use_cache: bool | None = None,
+        **model_kwargs: object,
+    ) -> list[str]:
+        """Generate text with the subset of HF options used by this project."""
 
-            # context_length = context_length_tensor[0].item()
+        del bos_token_id, length_penalty, decoder_start_token_id, use_cache
+        if num_beams not in (None, 1):
+            raise NotImplementedError("Beam search is not implemented")
 
-            tokens = context_tokens_tensor
-            tokens = tokens.view(1, -1).contiguous()
-            tokens = tokens.to(torch.cuda.current_device())
-            attention_mask, loss_mask, position_ids = get_masks_and_position_ids(tokens, self.pad_token_id, False,
-                                                                                 False)
-            lm_logits = self.model(tokens, position_ids, attention_mask)
-            loss = None
-            if labels is not None:
-                # Shift so that tokens < n predict n
-                shift_logits = lm_logits[..., :-1, :].contiguous()
-                shift_labels = lbl[..., 1:].contiguous()
-                # Flatten the tokens
-                loss_fct = CrossEntropyLoss(ignore_index=self.pad_token_id)
-                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            res.append((lm_logits, loss))
-        logits = torch.cat([x[0] for x in res], dim=0)[:, : original_context_length, :]
-        if loss is not None:
-            loss = [x[1] for x in res]
-        return ModelOutput(logits, loss)
+        if input_ids is None:
+            encoded = self.tokenizer.encode(
+                text or "", add_special_tokens=False
+            )
+            input_ids = [encoded]
+        sequences = torch.as_tensor(
+            input_ids, dtype=torch.long, device=self.device
+        )
+        if sequences.ndim != 2 or sequences.shape[1] == 0:
+            raise ValueError("input_ids must be a non-empty rank-2 tensor")
+
+        num_return_sequences = num_return_sequences or 1
+        if num_return_sequences > 1:
+            sequences = sequences.repeat_interleave(
+                num_return_sequences, dim=0
+            )
+
+        max_new_tokens = model_kwargs.pop("max_new_tokens", None)
+        if model_kwargs:
+            unknown = ", ".join(sorted(model_kwargs))
+            raise TypeError(f"Unsupported generation options: {unknown}")
+        if max_length is None:
+            new_tokens = int(max_new_tokens) if max_new_tokens else 20
+            max_length = sequences.shape[1] + new_tokens
+        max_length = min(
+            max_length, self.model.config.max_position_embeddings
+        )
+        min_length = min_length or 0
+        do_sample = bool(do_sample)
+        early_stopping = True if early_stopping is None else early_stopping
+        temperature = 1.0 if temperature is None else temperature
+        top_k = 0 if top_k is None else top_k
+        top_p = 1.0 if top_p is None else top_p
+        repetition_penalty = (
+            1.0 if repetition_penalty is None else repetition_penalty
+        )
+        no_repeat_ngram_size = no_repeat_ngram_size or 0
+        pad_token_id = (
+            self.pad_token_id if pad_token_id is None else pad_token_id
+        )
+        eos_token_id = (
+            self.eos_token_id if eos_token_id is None else eos_token_id
+        )
+        forbidden = [
+            tuple(int(token) for token in item)
+            for item in (bad_words_ids or ())
+            if item
+        ]
+
+        finished = torch.zeros(
+            sequences.shape[0], dtype=torch.bool, device=self.device
+        )
+        while sequences.shape[1] < max_length:
+            next_logits = self.model(
+                sequences, logits_to_keep=1
+            )[:, -1].float()
+            _apply_repetition_penalty(
+                next_logits, sequences, repetition_penalty
+            )
+            _ban_forbidden_completions(
+                next_logits, sequences, forbidden
+            )
+            if no_repeat_ngram_size > 0:
+                _ban_repeated_ngrams(
+                    next_logits, sequences, no_repeat_ngram_size
+                )
+            if sequences.shape[1] < min_length:
+                next_logits[:, eos_token_id] = -torch.inf
+
+            if do_sample:
+                if temperature <= 0:
+                    raise ValueError("temperature must be positive")
+                next_logits.div_(temperature)
+                _top_k_top_p_filter(next_logits, top_k=top_k, top_p=top_p)
+                probabilities = torch.softmax(next_logits, dim=-1)
+                next_tokens = torch.multinomial(
+                    probabilities, num_samples=1
+                ).squeeze(1)
+            else:
+                next_tokens = next_logits.argmax(dim=-1)
+
+            next_tokens = torch.where(
+                finished,
+                torch.full_like(next_tokens, pad_token_id),
+                next_tokens,
+            )
+            sequences = torch.cat(
+                (sequences, next_tokens.unsqueeze(1)), dim=1
+            )
+            finished |= next_tokens.eq(eos_token_id)
+            if early_stopping and bool(finished.all()):
+                break
+
+        return [
+            self.tokenizer.decode(
+                sequence.tolist(), clean_up_tokenization_spaces=False
+            )
+            for sequence in sequences
+        ]
+
+
+def _apply_repetition_penalty(
+    logits: torch.Tensor,
+    sequences: torch.Tensor,
+    penalty: float,
+) -> None:
+    if penalty == 1.0:
+        return
+    if penalty <= 0:
+        raise ValueError("repetition_penalty must be positive")
+    for row, tokens in enumerate(sequences):
+        used = tokens.unique()
+        scores = logits[row, used]
+        logits[row, used] = torch.where(
+            scores < 0, scores * penalty, scores / penalty
+        )
+
+
+def _ban_forbidden_completions(
+    logits: torch.Tensor,
+    sequences: torch.Tensor,
+    forbidden: Sequence[tuple[int, ...]],
+) -> None:
+    for row, tokens in enumerate(sequences.tolist()):
+        for item in forbidden:
+            prefix = item[:-1]
+            if not prefix or (
+                len(tokens) >= len(prefix)
+                and tuple(tokens[-len(prefix) :]) == prefix
+            ):
+                logits[row, item[-1]] = -torch.inf
+
+
+def _ban_repeated_ngrams(
+    logits: torch.Tensor,
+    sequences: torch.Tensor,
+    ngram_size: int,
+) -> None:
+    if ngram_size < 1:
+        return
+    for row, tokens in enumerate(sequences.tolist()):
+        prefix_size = ngram_size - 1
+        if len(tokens) < prefix_size:
+            continue
+        prefix = tuple(tokens[-prefix_size:]) if prefix_size else ()
+        banned: set[int] = set()
+        for start in range(len(tokens) - ngram_size + 1):
+            ngram = tuple(tokens[start : start + ngram_size])
+            if ngram[:-1] == prefix:
+                banned.add(ngram[-1])
+        if banned:
+            logits[row, list(banned)] = -torch.inf
+
+
+def _top_k_top_p_filter(
+    logits: torch.Tensor, *, top_k: int, top_p: float
+) -> None:
+    if top_k > 0:
+        top_k = min(top_k, logits.shape[-1])
+        threshold = torch.topk(logits, top_k, dim=-1).values[:, -1:]
+        logits.masked_fill_(logits < threshold, -torch.inf)
+
+    if 0.0 < top_p < 1.0:
+        sorted_logits, sorted_indices = torch.sort(
+            logits, descending=True, dim=-1
+        )
+        cumulative = torch.softmax(
+            sorted_logits, dim=-1
+        ).cumsum(dim=-1)
+        remove = cumulative > top_p
+        remove[:, 1:] = remove[:, :-1].clone()
+        remove[:, 0] = False
+        remove = torch.zeros_like(remove).scatter(
+            1, sorted_indices, remove
+        )
+        logits.masked_fill_(remove, -torch.inf)

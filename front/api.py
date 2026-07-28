@@ -8,6 +8,14 @@ import random
 from common import Prompt
 import restproxy
 
+MODEL_PORTS = {
+    'lawa': '7005',
+    'mig': '7004',
+    'original': '7002',
+    'gpt3': '7001',
+    'frida': '7003',
+}
+
 app = FastAPI(title="Russian GPT", version="0.3",)
 app.add_middleware(
         CORSMiddleware,
@@ -26,13 +34,12 @@ async def gen_sample(prompt: Prompt, request: Request):
         if prompt.model == 'frida не работает':
             result = {"replies": restproxy.get_sample(prompt.prompt, prompt.length, prompt.num_samples, prompt.allow_linebreak, prompt.temperature)}
         else:
-            port = ''
-            if prompt.model == 'poetry': port = '7000'
-            if prompt.model == 'gpt3': port = '7001'
-            if prompt.model == 'xlarge': port = '7002'
-            if prompt.model == 'frida': port = '7003'
-            if prompt.model == 'mig': port = '7004'
-            if prompt.model == 'lawa': port = '7005'
+            port = MODEL_PORTS.get(prompt.model)
+            if port is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unknown model: {prompt.model}",
+                )
             
             host_url = f'http://127.0.0.1:{port}/generate/'
             async with httpx.AsyncClient() as client:
@@ -49,7 +56,7 @@ async def gen_sample(prompt: Prompt, request: Request):
 
 @app.get("/models")
 def get_models():
-    return ['lawa', 'mig', 'xlarge', 'gpt3', 'frida']
+    return list(MODEL_PORTS)
 
 @app.get("/health")
 def healthcheck():

@@ -1,0 +1,16 @@
+**
+!Dockerfile_sparse_xl
+!req_sparse_xl.txt
+!model.py
+!validate_xl.py
+!front/
+!front/common.py
+!rest/
+!rest/__init__.py
+!rest/gen.py
+!rest/original.py
+!src/
+!src/__init__.py
+!src/modeling_xl.py
+!src/sparse_attention.py
+!src/xl_wrapper.py

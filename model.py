@@ -1,7 +1,9 @@
 from os import environ
 model_path = environ["MODEL"]
 
-if 'fred' in model_path:
+if model_path == "sparse_xl":
+    from rest.original import get_sample
+elif 'fred' in model_path:
     from rest.frida import get_sample
 else:
     from rest.lawa import get_sample

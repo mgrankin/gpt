@@ -27,15 +27,22 @@ x-large-services: &large-service
     - "traefik.http.routers.large.entrypoints=large"
     - traefik.http.services.large.loadbalancer.server.port=8000
 
-x-xl-services: &xl-service
-  <<: *vllm-service
+x-original-services: &original-service
+  <<: *shared-service
+  image: "sparse-xl:latest"
   environment:
-    - MODEL=xl/pelevin
-    - gpu_fraction=20
+    - MODEL=sparse_xl
+    - CHECKPOINT_PATH=/opt/app/models/sparse_xl/pelevin.model
+    - TOKENIZER_PATH=/opt/app/tokenizer/rugpt3xl.tokenizer
+  volumes:
+    - "./models/sparse_xl:/opt/app/models/sparse_xl:ro"
+    - "./tokenizer/rugpt3xl.tokenizer:/opt/app/tokenizer/rugpt3xl.tokenizer:ro"
+    - "./dataset/pelevin_valid.txt:/opt/app/dataset/pelevin_valid.txt:ro"
   labels:
-    - "traefik.http.routers.xl.rule=PathPrefix(`/`)"
-    - "traefik.http.routers.xl.entrypoints=xl"
-    - traefik.http.services.xl.loadbalancer.server.port=8000
+    - "traefik.enable=true"
+    - "traefik.http.routers.original.rule=PathPrefix(`/`)"
+    - "traefik.http.routers.original.entrypoints=original"
+    - traefik.http.services.original.loadbalancer.server.port=8000
 
 x-mig-services: &mig-services
   <<: *vllm-service
@@ -71,7 +78,7 @@ services:
 #        condition: service_healthy
       large3:
         condition: service_healthy
-      xl5:
+      original:
         condition: service_healthy
       frida1:
          condition: service_healthy
@@ -93,7 +100,7 @@ services:
       - "--providers.docker.exposedbydefault=true"
       - "--entrypoints.poetry.address=:7000"
       - "--entrypoints.large.address=:7001"
-      - "--entrypoints.xl.address=:7002"
+      - "--entrypoints.original.address=:7002"
       - "--entrypoints.frida.address=:7003"
       - "--entrypoints.mig.address=:7004"
       - "--entrypoints.lawa.address=:7005"
@@ -143,9 +150,9 @@ services:
       mig1:
          condition: service_healthy
 
-  # gpt3 XL pelevin
-  xl5:
-    <<: *xl-service
+  # Original sparse ruGPT3XL pelevin
+  original:
+    <<: *original-service
     deploy:
       resources:
         reservations:
