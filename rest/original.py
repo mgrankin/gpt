@@ -9,6 +9,13 @@ import torch
 
 from front.common import process_seq
 from rest.gen import bad_words
+from rest.sampling import (
+    DEFAULT_TEMPERATURE,
+    REPETITION_PENALTY,
+    TOP_K,
+    TOP_NSIGMA,
+    TOP_P,
+)
 from src.xl_wrapper import RuGPT3XL
 
 
@@ -44,7 +51,7 @@ def get_sample(
     length: int,
     num_samples: int,
     allow_linebreak: bool,
-    temperature: float = 1.0,
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> list[str]:
     """Generate continuations using the legacy model's exact sparse layout."""
 
@@ -61,8 +68,10 @@ def get_sample(
         max_new_tokens=length,
         do_sample=True,
         temperature=temperature,
-        top_p=0.9,
-        repetition_penalty=2.0,
+        top_nsigma=TOP_NSIGMA,
+        top_p=TOP_P,
+        top_k=TOP_K,
+        repetition_penalty=REPETITION_PENALTY,
         bad_words_ids=bad_words(tokenizer, allow_linebreak),
         num_return_sequences=num_samples,
     )

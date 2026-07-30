@@ -16,7 +16,20 @@ seq_length = 512
 
 full_path = f'./models/{model_path}'
 import torch
-from transformers import GPT2Tokenizer, T5ForConditionalGeneration, AutoTokenizer
+from transformers import (
+    AutoTokenizer,
+    GPT2Tokenizer,
+    LogitsProcessorList,
+    T5ForConditionalGeneration,
+)
+from .sampling import (
+    DEFAULT_TEMPERATURE,
+    REPETITION_PENALTY,
+    TOP_K,
+    TOP_NSIGMA,
+    TOP_P,
+    TopNSigmaLogitsProcessor,
+)
 
 # %% ../06_frida.ipynb 9
 tokenizer = GPT2Tokenizer.from_pretrained(full_path+'/optimized/', eos_token='</s>')
@@ -35,7 +48,13 @@ from front.common import process_seq
 
 line_enders = get_line_enders(tokenizer)
 
-def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temperature:float=0.1):
+def get_sample(
+    prompt,
+    length: int,
+    num_samples: int,
+    allow_linebreak: bool,
+    temperature: float = DEFAULT_TEMPERATURE,
+):
     max_input = 2*1024 - length
     prompt = tokenizer.decode(tokenizer.encode(prompt)[-max_input:]).removeprefix('<|begin_of_text|>')
 
@@ -48,11 +67,21 @@ def get_sample(prompt, length:int, num_samples:int, allow_linebreak:bool, temper
     lm_text = '<LM>' + prompt
     input_ids=torch.tensor([tokenizer.encode(lm_text)]).cuda()
     torch.cuda.empty_cache()
-    output_ids = model.generate(input_ids, do_sample=True, temperature=temperature, repetition_penalty=5.0, min_p=0.1, #watermark=False, typical_p=0.9, top_k=10, top_p=0.95,
-                        max_new_tokens=length, bad_words_ids = bad_words_ids,
-                        num_return_sequences=num_samples,)
+    output_ids = model.generate(
+        input_ids,
+        do_sample=True,
+        temperature=temperature,
+        repetition_penalty=REPETITION_PENALTY,
+        top_k=TOP_K,
+        top_p=TOP_P,
+        logits_processor=LogitsProcessorList(
+            [TopNSigmaLogitsProcessor(TOP_NSIGMA)]
+        ),
+        max_new_tokens=length,
+        bad_words_ids=bad_words_ids,
+        num_return_sequences=num_samples,
+    )
     
     result = [tokenizer.decode(o[1:]).replace('\n', ' ') for o in output_ids]
     result = process_seq(result)
     return result
-

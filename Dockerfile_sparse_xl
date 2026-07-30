@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 COPY model.py validate_xl.py /opt/app/
 COPY front/common.py /opt/app/front/common.py
-COPY rest/__init__.py rest/gen.py rest/original.py /opt/app/rest/
+COPY rest/__init__.py rest/gen.py rest/original.py rest/sampling.py /opt/app/rest/
 COPY src/__init__.py src/modeling_xl.py src/sparse_attention.py \
     src/xl_wrapper.py /opt/app/src/
 

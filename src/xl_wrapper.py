@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -163,6 +164,7 @@ class RuGPT3XL(nn.Module):
         temperature: float | None = None,
         top_k: int | None = None,
         top_p: float | None = None,
+        top_nsigma: float | None = None,
         repetition_penalty: float | None = None,
         bad_words_ids: Iterable[Iterable[int]] | None = None,
         bos_token_id: int | None = None,
@@ -253,6 +255,8 @@ class RuGPT3XL(nn.Module):
             if do_sample:
                 if temperature <= 0:
                     raise ValueError("temperature must be positive")
+                if top_nsigma is not None:
+                    _top_nsigma_filter(next_logits, n=top_nsigma)
                 next_logits.div_(temperature)
                 _top_k_top_p_filter(next_logits, top_k=top_k, top_p=top_p)
                 probabilities = torch.softmax(next_logits, dim=-1)
@@ -357,3 +361,22 @@ def _top_k_top_p_filter(
             1, sorted_indices, remove
         )
         logits.masked_fill_(remove, -torch.inf)
+
+
+def _top_nsigma_filter(logits: torch.Tensor, *, n: float) -> None:
+    if not math.isfinite(n) or n <= 0:
+        raise ValueError("top_nsigma must be a positive finite number")
+
+    work = logits.float()
+    finite = torch.isfinite(work)
+    count = finite.sum(dim=-1, keepdim=True)
+    safe = torch.where(finite, work, torch.zeros_like(work))
+    mean = safe.sum(dim=-1, keepdim=True) / count.clamp_min(1)
+    delta = torch.where(finite, work - mean, torch.zeros_like(work))
+    denominator = (count - 1).clamp_min(1)
+    std = (delta.square().sum(dim=-1, keepdim=True) / denominator).sqrt()
+    maximum = work.masked_fill(~finite, -torch.inf).amax(
+        dim=-1, keepdim=True
+    )
+    threshold = maximum - n * std
+    logits.masked_fill_(finite & (work < threshold), -torch.inf)

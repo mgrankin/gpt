@@ -12,6 +12,13 @@ from transformers import AutoTokenizer,AutoConfig
 from front.common import process_seq
 import random
 from .gen import get_line_enders, iftoken
+from .sampling import (
+    DEFAULT_TEMPERATURE,
+    REPETITION_PENALTY,
+    TOP_NSIGMA,
+    TOP_P,
+    TopNSigmaLogitsProcessor,
+)
 model_path = getenv("MODEL")
 gpu_part = int(getenv("gpu_fraction",20))/100
 
@@ -66,18 +73,30 @@ def get_sampling_params(tokenizer, length: int, num_samples: int, allow_linebrea
     return SamplingParams(
         max_tokens=length,
         n=num_samples,
-        min_p=0.1,
+        min_p=0.0,
+        top_p=TOP_P,
+        # vLLM 0.8.x uses -1, rather than 0, to disable top-k.
+        top_k=-1,
         stop_token_ids=stop_token_ids,
         ignore_eos=True,
-        logits_processors=[token_blocker],
+        logits_processors=[
+            token_blocker,
+            TopNSigmaLogitsProcessor(TOP_NSIGMA),
+        ],
         #logit_bias=logit_bias,
-        repetition_penalty=2.,
+        repetition_penalty=REPETITION_PENALTY,
         temperature=temperature,
         seed=random.randint(0, 1000000),
     )
 
 # %% ../07_lawa.ipynb 10
-def get_sample(prompt: str, length: int, num_samples: int, allow_linebreak: bool, temperature: float = 1.0):
+def get_sample(
+    prompt: str,
+    length: int,
+    num_samples: int,
+    allow_linebreak: bool,
+    temperature: float = DEFAULT_TEMPERATURE,
+):
     max_input = model.llm_engine.model_config.max_model_len - length
     prompt = tokenizer.decode(tokenizer.encode(prompt)[-max_input:]).removeprefix('<|begin_of_text|>')
     sampling_params = get_sampling_params(tokenizer, length, num_samples, allow_linebreak, temperature)
