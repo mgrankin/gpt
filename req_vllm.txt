@@ -6,8 +6,8 @@ SQLAlchemy
 pandas
 Pillow
 fastapi
-tokenizers
-transformers
+tokenizers==0.21.1
+transformers==4.51.3
 diffusers
 datasets
 scipy
@@ -29,4 +29,4 @@ pytelegrambotapi
 tendo
 docker
 httpx
-vllm
+vllm==0.8.4
